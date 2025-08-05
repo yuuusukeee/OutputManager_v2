@@ -23,11 +23,22 @@
 
 ## 必要環境
 
-- Java 17 or 21
-- Spring Boot 3.x
-- MySQL 8.x
-- Maven
 
+- OS：Windows 11
+- Java：21
+- Maven：3.8.x 以上
+- Spring Boot：3.4.8
+- MySQL：8.0.23
+- 開発環境：Eclipse
+- Gitクライアント：Fork
+- 依存ライブラリ：
+    - Spring Web
+    - Thymeleaf
+    - MyBatis Framework
+    - MySQL Driver
+    - Lombok
+    - Spring Boot DevTools
+    - Validation
 ---
 
 ## 主な機能
