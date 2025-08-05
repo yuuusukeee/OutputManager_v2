@@ -26,7 +26,7 @@
 
 - OS：Windows 11
 - Java：21
-- Maven：3.8.x 以上
+- Maven：Maven：3.9.9
 - Spring Boot：3.4.8
 - MySQL：8.0.23
 - 開発環境：Eclipse
@@ -63,10 +63,11 @@
 
 ## ドキュメント
 
-- [画面設計書（PDF）](./docs/画面設計書.pdf)
-- [データ設計書（PDF）](./docs/データ設計書.pdf)
-- [プログラム設計書（PDF）](./docs/プログラム設計書.pdf)
-- [企画書（テキスト）](./docs/川上友輔_企画書.txt)
+- [画面設計書.xlsx.pdf](https://github.com/user-attachments/files/21588889/xlsx.pdf)
+- [データ設計書.xlsx.pdf](https://github.com/user-attachments/files/21588803/xlsx.pdf)
+- [プログラム設計書.docx.pdf](https://github.com/user-attachments/files/21588916/docx.pdf)
+- [川上友輔_企画書.pdf](https://github.com/user-attachments/files/21588960/_.pdf)
+
 
 > ※PDF等のドキュメントファイルは`docs`フォルダ内に格納しています。
 
