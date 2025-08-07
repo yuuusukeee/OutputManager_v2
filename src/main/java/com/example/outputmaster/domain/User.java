@@ -1,5 +1,8 @@
 package com.example.outputmaster.domain;
-
+/**
+ * ユーザー情報を管理するクラス
+ * このクラスはusersテーブル1レコードを表現する
+ */
 import java.time.LocalDateTime;
 
 import lombok.Data;
