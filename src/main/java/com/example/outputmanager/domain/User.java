@@ -1,4 +1,4 @@
-package com.example.outputmaneger.domain;
+package com.example.outputmanager.domain;
 /**
  * ユーザー情報を管理するクラス
  * このクラスはusersテーブル1レコードを表現する

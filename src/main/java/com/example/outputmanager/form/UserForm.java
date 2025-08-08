@@ -1,9 +1,9 @@
-package com.example.outputmaneger.form;
+package com.example.outputmanager.form;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-import com.example.outputmaneger.domain.User;
+import com.example.outputmanager.domain.User;
 
 import lombok.Data;
 

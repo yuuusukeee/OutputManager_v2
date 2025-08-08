@@ -1,4 +1,4 @@
-package com.example.outputmaneger;
+package com.example.outputmanager;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

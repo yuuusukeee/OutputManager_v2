@@ -1,4 +1,4 @@
-package com.example.outputmaneger.form;
+package com.example.outputmanager.form;
 
 import jakarta.validation.constraints.NotBlank;
 
