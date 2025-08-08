@@ -1,8 +1,9 @@
-package com.example.outputmaster.form;
+package com.example.outputmaneger.form;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-import com.example.outputmaster.domain.User;
+import com.example.outputmaneger.domain.User;
 
 import lombok.Data;
 
@@ -13,7 +14,7 @@ public class UserForm {
 	private String username;
 	
     /** メールアドレス（形式・必須） */
-	@NotBlank
+	@Email
 	private String email;
 	
     /** パスワード（必須） */

@@ -1,6 +1,6 @@
-package com.example.outputmaster.mapper;
+package com.example.outputmaneger.mapper;
 
-import com.example.outputmaster.domain.User;
+import com.example.outputmaneger.domain.User;
 
 public interface UserMapper {
 	 /** ユーザー名からユーザーを1件取得 */

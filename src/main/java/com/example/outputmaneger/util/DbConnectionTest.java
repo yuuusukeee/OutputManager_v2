@@ -1,4 +1,4 @@
-package com.example.outputmaster.util;
+package com.example.outputmaneger.util;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
