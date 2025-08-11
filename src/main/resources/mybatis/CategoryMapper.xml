@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.outputmanager.mapper.CategoryMapper">
+
+  <select id="selectAll" resultType="com.example.outputmanager.domain.Category">
+    SELECT id, name FROM categories ORDER BY id
+  </select>
+
+  <select id="selectById" resultType="com.example.outputmanager.domain.Category">
+    SELECT id, name FROM categories WHERE id = #{id}
+  </select>
+
+  <insert id="insert" parameterType="com.example.outputmanager.domain.Category">
+    INSERT INTO categories (name) VALUES (#{name})
+  </insert>
+
+  <update id="update" parameterType="com.example.outputmanager.domain.Category">
+    UPDATE categories SET name = #{name} WHERE id = #{id}
+  </update>
+
+  <delete id="delete" parameterType="int">
+    DELETE FROM categories WHERE id = #{id}
+  </delete>
+
+  <select id="countByName" resultType="int">
+    SELECT COUNT(*) FROM categories WHERE name = #{name}
+  </select>
+
+</mapper>

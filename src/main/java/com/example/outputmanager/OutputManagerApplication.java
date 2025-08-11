@@ -4,10 +4,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class OutputManegerApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(OutputManegerApplication.class, args);
-	}
-
+public class OutputManagerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(OutputManagerApplication.class, args);
+    }
+    
 }

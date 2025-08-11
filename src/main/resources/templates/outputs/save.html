@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>アウトプット登録・編集</title>
+  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+  <div class="container mt-4">
+    <h1>アウトプット登録・編集</h1>
+	<form th:object="${outputForm}"
+	      th:action="*{id} == null ? @{/outputs/save} : @{/outputs/{id}/update(id=*{id})}"
+	      method="post">
+	  <input type="hidden" th:if="*{id} != null" th:field="*{id}">
+
+      <div class="mb-2">
+        <label>タイトル</label>
+        <input type="text" th:field="*{title}" class="form-control" />
+        <span th:errors="*{title}" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label>サマリ</label>
+        <input type="text" th:field="*{summary}" class="form-control" />
+        <span th:errors="*{summary}" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label>詳細</label>
+        <textarea th:field="*{detail}" class="form-control"></textarea>
+        <span th:errors="*{detail}" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label>カテゴリ</label>
+        <select th:field="*{categoryId}" class="form-select">
+          <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+        </select>
+        <span th:errors="*{categoryId}" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label>アイコンURL（任意）</label>
+        <input type="text" th:field="*{icon}" class="form-control" placeholder="画像URL" />
+        <span th:errors="*{icon}" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label>動画URL（任意）</label>
+        <input type="text" th:field="*{videoUrl}" class="form-control" placeholder="https://..." />
+        <span th:errors="*{videoUrl}" class="text-danger"></span>
+      </div>
+      <button type="submit" class="btn btn-primary">保存</button>
+      <a th:href="@{/outputs}" class="btn btn-secondary ms-2">戻る</a>
+    </form>
+  </div>
+</body>
+</html>

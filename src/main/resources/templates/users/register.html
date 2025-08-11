@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>ユーザー登録</title>
+  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+  <div class="container mt-4">
+    <h1>ユーザー登録</h1>
+    <form th:action="@{/users/register}" method="post" th:object="${userForm}">
+      <div class="mb-2">
+        <label>ユーザー名</label>
+        <input type="text" th:field="*{name}" class="form-control" />
+        <span th:errors="*{name}" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label>メールアドレス</label>
+        <input type="email" th:field="*{email}" class="form-control" />
+        <span th:errors="*{email}" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label>パスワード</label>
+        <input type="password" th:field="*{password}" class="form-control" />
+        <span th:errors="*{password}" class="text-danger"></span>
+      </div>
+      <div class="mb-2">
+        <label>アイコンURL（任意）</label>
+        <input type="text" th:field="*{icon}" class="form-control" />
+        <span th:errors="*{icon}" class="text-danger"></span>
+      </div>
+      <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger" th:text="${#fields.globalErrors()[0].defaultMessage}"></div>
+      <button type="submit" class="btn btn-primary">登録</button>
+      <a th:href="@{/}" class="btn btn-secondary ms-2">戻る</a>
+    </form>
+  </div>
+</body>
+</html>

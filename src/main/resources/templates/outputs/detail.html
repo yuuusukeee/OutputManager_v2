@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>アウトプット詳細</title>
+  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+  <div class="container mt-4">
+    <h1 th:text="${output.title}">タイトル</h1>
+    <div class="mb-2">カテゴリ: <span th:text="${categoryNameMap[output.categoryId]}"></span></div>
+    <div class="mb-2">サマリ: <span th:text="${output.summary}"></span></div>
+    <div class="mb-2">詳細: <pre th:text="${output.detail}" style="white-space: pre-wrap;"></pre></div>
+    <div class="mb-2" th:if="${output.icon}">
+      <img th:src="@{${output.icon}}" class="img-thumbnail" style="max-width:300px;" />
+    </div>
+    <div class="mb-2" th:if="${output.videoUrl}">
+      <a th:href="@{${output.videoUrl}}" target="_blank" rel="noopener">動画を見る</a>
+    </div>
+    <div class="mb-2">
+      <form th:action="@{/favorites/toggle}" method="post">
+        <input type="hidden" name="outputId" th:value="${output.id}" />
+        <button type="submit" class="btn" th:classappend="${isFavorite} ? 'btn-warning' : 'btn-outline-warning'">
+          <span th:text="${isFavorite} ? '★お気に入り解除' : '★お気に入り追加'"></span>
+        </button>
+      </form>
+    </div>
+    <a th:href="@{/outputs}" class="btn btn-secondary">一覧に戻る</a>
+  </div>
+</body>
+</html>

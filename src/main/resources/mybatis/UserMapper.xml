@@ -1,14 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- MyBatis用XMLマッパー（UserMapperのSQL定義） -->
-
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.outputmanager.">
+<mapper namespace="com.example.outputmanager.mapper.UserMapper">
 
-    <!-- ユーザー名で検索するSQL -->
-    
-    <!-- IDで検索するSQL -->
-    
-    <!-- 新規ユーザー登録SQL -->
-    
+  <select id="selectByName" resultType="com.example.outputmanager.domain.User">
+    SELECT id, name, email, password, icon, created_at
+    FROM users
+    WHERE name = #{name}
+  </select>
+
+  <select id="selectById" resultType="com.example.outputmanager.domain.User">
+    SELECT id, name, email, password, icon, created_at
+    FROM users
+    WHERE id = #{id}
+  </select>
+
+  <insert id="insert" parameterType="com.example.outputmanager.domain.User">
+    INSERT INTO users (name, email, password, icon, created_at)
+    VALUES (#{name}, #{email}, #{password}, #{icon}, NOW())
+  </insert>
+
+  <select id="countByEmail" resultType="int">
+    SELECT COUNT(*) FROM users WHERE email = #{email}
+  </select>
+
+  <select id="countByName" resultType="int">
+    SELECT COUNT(*) FROM users WHERE name = #{name}
+  </select>
+
 </mapper>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>カテゴリ登録・編集</title>
+  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+  <div class="container mt-4">
+    <h1>カテゴリ登録・編集</h1>
+    <form th:action="@{${#httpServletRequest.requestURI}}" th:object="${category}" method="post">
+      <div class="mb-2">
+        <label>カテゴリ名</label>
+        <input type="text" th:field="*{name}" class="form-control" />
+        <div class="text-danger" th:errors="*{name}"></div>
+      </div>
+      <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger" th:text="${#fields.globalErrors()[0].defaultMessage}"></div>
+      <button type="submit" class="btn btn-primary">保存</button>
+      <a th:href="@{/categories}" class="btn btn-secondary ms-2">戻る</a>
+    </form>
+  </div>
+</body>
+</html>

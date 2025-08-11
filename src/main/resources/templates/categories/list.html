@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>カテゴリ一覧</title>
+  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+  <div class="container mt-4">
+    <h1>カテゴリ一覧</h1>
+    <div th:if="${categoryDeleteError}" class="alert alert-danger" th:text="${categoryDeleteError}"></div>
+    <a th:href="@{/categories/add}" class="btn btn-primary mb-2">カテゴリ追加</a>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>カテゴリ名</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="cat : ${categories}">
+          <td th:text="${cat.name}"></td>
+          <td>
+            <a th:href="@{/categories/edit/{id}(id=${cat.id})}" class="btn btn-sm btn-secondary">編集</a>
+            <form th:action="@{/categories/delete/{id}(id=${cat.id})}" method="post" style="display:inline;"
+                  onsubmit="return confirm('削除しますか？');">
+              <button type="submit" class="btn btn-sm btn-danger">削除</button>
+            </form>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <a th:href="@{/outputs}" class="btn btn-secondary">戻る</a>
+  </div>
+</body>
+</html>

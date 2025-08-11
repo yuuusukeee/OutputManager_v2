@@ -1,18 +1,14 @@
 package com.example.outputmanager.domain;
-/**
- * ユーザー情報を管理するクラス
- * このクラスはusersテーブル1レコードを表現する
- */
-import java.time.LocalDateTime;
 
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Data
 public class User {
-	private Integer id;
-	private String username;
-	private String email;
-	private String password;
-	private LocalDateTime createdAt;
-
+    private Integer id;
+    private String name;        // users.name
+    private String email;       // users.email
+    private String password;    // ハッシュ
+    private String icon;        // users.icon
+    private LocalDateTime createdAt; // users.created_at
 }
