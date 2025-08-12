@@ -1,20 +1,36 @@
 package com.example.outputmanager.form;
 
-import lombok.Data;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 import com.example.outputmanager.domain.User;
+
+import lombok.Data;
 
 @Data
 public class UserForm {
-    @NotBlank @Size(max=50)
+    // 表示名（必須・最大50）
+    @NotBlank @Size(max = 50)
     private String name;
-    @NotBlank @Email @Size(max=100)
+
+    // メール（必須・形式チェック・最大100）
+    @NotBlank @Email @Size(max = 100)
     private String email;
-    @NotBlank @Size(min=8, max=255)
+
+    // パスワード（必須・8〜255）
+    @NotBlank @Size(min = 8, max = 255)
     private String password;
-    @Size(max=100)
+
+    // パスワード確認（必須ではないが、Controllerで一致チェックを行う前提）
+    @Size(min = 8, max = 255)
+    private String passwordConfirm;
+
+    // アイコンURL（任意・最大100）
+    @Size(max = 100)
     private String icon;
 
+    // ★確認用は保存しない：Entityへは反映させない
     public User toEntity() {
         User u = new User();
         u.setName(this.name);

@@ -1,35 +1,60 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
-  <title>カテゴリ一覧</title>
-  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>アウトプット一覧</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-  <div class="container mt-4">
-    <h1>カテゴリ一覧</h1>
-    <div th:if="${categoryDeleteError}" class="alert alert-danger" th:text="${categoryDeleteError}"></div>
-    <a th:href="@{/categories/add}" class="btn btn-primary mb-2">カテゴリ追加</a>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>カテゴリ名</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr th:each="cat : ${categories}">
-          <td th:text="${cat.name}"></td>
-          <td>
-            <a th:href="@{/categories/edit/{id}(id=${cat.id})}" class="btn btn-sm btn-secondary">編集</a>
-            <form th:action="@{/categories/delete/{id}(id=${cat.id})}" method="post" style="display:inline;"
-                  onsubmit="return confirm('削除しますか？');">
-              <button type="submit" class="btn btn-sm btn-danger">削除</button>
-            </form>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <a th:href="@{/outputs}" class="btn btn-secondary">戻る</a>
+
+<header class="container" style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;">
+  <h1 class="title" style="margin:0;">アウトプット一覧</h1>
+  <div class="actions">
+    <a class="btn btn-primary" th:href="@{/outputs/add}">新規登録</a>
+    <a class="btn" th:href="@{/logout}">ログアウト</a>
   </div>
+</header>
+
+<section class="container" style="margin-top:16px;">
+  <!-- 検索フォーム -->
+  <form th:action="@{/outputs}" method="get" class="form" style="display:grid;grid-template-columns:1fr 220px 120px;gap:12px;align-items:center;">
+    <input class="input" type="text" name="keyword" placeholder="キーワードで検索" th:value="${keyword}">
+    <select class="select" name="categoryId">
+      <option value="">すべて</option>
+      <option th:each="c : ${categories}"
+              th:value="${c.id}"
+              th:text="${c.name}"
+              th:selected="${c.id == categoryId}"></option>
+    </select>
+    <button class="btn btn-primary" type="submit">検索</button>
+  </form>
+</section>
+
+<!-- ▼ ① お気に入り上寄せ＋カテゴリ別ブロック UI -->
+<section class="container" style="margin-top:24px;">
+  <!-- grouped でも groupedOutputs でもOKに -->
+  <div th:with="blocks=${grouped != null ? grouped : groupedOutputs}">
+    <div th:each="entry : ${blocks}">
+      <h2 class="section-title" th:text="${entry.key}" style="margin:24px 0 12px;"></h2>
+
+      <!-- カードグリッド -->
+      <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+        <article class="card" th:each="o : ${entry.value}">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <a class="title" th:href="@{|/outputs/${o.id}|}" th:text="${o.title}">title</a>
+            <!-- ★印。isFavorite でも favorite でもOKに -->
+            <span class="favorite" th:if="${o.isFavorite != null ? o.isFavorite : o.favorite}" title="お気に入り">★</span>
+          </div>
+          <div class="meta" style="margin-top:6px;">
+            <span th:text="${#temporals.format(o.createdAt,'yyyy/MM/dd')}">2025/08/12</span>
+          </div>
+          <p class="desc" style="margin-top:8px;" th:text="${o.summary}">summary</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
 </body>
 </html>

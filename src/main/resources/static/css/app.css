@@ -1,0 +1,24 @@
+:root { --om-max: 960px; }
+
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; }
+.container-narrow { max-width: var(--om-max); margin: 32px auto; padding: 0 16px; }
+
+.nav-gap { gap: 12px; }
+.table td, .table th { vertical-align: middle; }
+
+.star-btn { font-size: 1.1rem; line-height: 1; padding: .25rem .4rem; }
+.category-title { margin-top: 1.75rem; border-bottom: 1px solid #e5e7eb; padding-bottom: .25rem; }
+.output-row { padding: 12px 0; border-bottom: 1px solid #eee; }
+.output-title-line { display:flex; align-items:center; gap: 8px; }
+.output-title-line a { font-weight: 600; }
+.output-meta { color:#666; font-size:.9rem; margin-top:4px; }
+.output-summary { margin-top:6px; }
+.btn { padding:.45rem .9rem; border:1px solid #247cff; border-radius:8px; }
+.btn:hover { background:#247cff; color:#fff; }
+.btn.btn-outline { border-color:#999; color:#333; }
+.btn.btn-outline:hover { background:#f2f2f2; }
+.star-btn { font-size:1.1rem; line-height:1; padding:.15rem .4rem; border:1px solid #ddd; border-radius:6px; background:#fff; cursor:pointer; }
+.star-btn:hover { background:#fff7d6; }
+body {
+    background-color: #f0f0f0; /* 明るいグレー */
+}
