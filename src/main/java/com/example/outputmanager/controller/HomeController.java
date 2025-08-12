@@ -19,33 +19,41 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class HomeController {
 
-    private final UserService userService; // 今は未使用（後で本実装に戻す用）
+    private final UserService userService;
 
-    /** ログイン画面表示 */
-    @GetMapping("/")
-    public String home(Model model) {
+    /** ログイン画面表示（未ログインのみ） */
+    @GetMapping({"/", "/login"})
+    public String loginPage(HttpSession session, Model model) {
+        if (session.getAttribute("loginUserId") != null) {
+            return "redirect:/outputs"; // 既にログイン済みなら一覧へ
+        }
         model.addAttribute("loginForm", new LoginForm());
-        return "home";
+        return "home"; // 既存の home.html をログイン画面として再利用
     }
 
-    /** ログイン処理（暫定：強制ログイン） */
-    @PostMapping("/")
-    public String login(@Valid @ModelAttribute("loginForm") LoginForm form,
-                        Errors errors,
-                        HttpSession session,
-                        Model model) {
+    /** ログイン実行 */
+    @PostMapping("/login")
+    public String doLogin(@Valid @ModelAttribute("loginForm") LoginForm form,
+                          Errors errors,
+                          HttpSession session) {
+        if (errors.hasErrors()) return "home";
 
-        if (errors.hasErrors()) {
+        // name/passwordで認証（UserServiceは既にBCrypt対応）
+        boolean ok = userService.isValidLogin(form.getName(), form.getPassword());
+        if (!ok) {
+            errors.reject("login.failed", "ユーザー名またはパスワードが正しくありません。");
             return "home";
         }
-
-        // ★一時対処：認証をスキップして userId=1 をセッションに保存
-        Integer userId = 1; // ← DBの outputs.user_id に合わせて必要なら変更
-        session.setAttribute("userId", userId);
-
-        System.out.println("[DEBUG] forced login userId=" + session.getAttribute("userId"));
-
-        // 一覧へ
+        // 認証OK → ユーザーIDを取得しセッションに保存
+        Integer uid = userService.findUserId(form.getName());
+        session.setAttribute("loginUserId", uid);   // ★セッションキーを統一
         return "redirect:/outputs";
+    }
+
+    /** ログアウト */
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
     }
 }

@@ -7,26 +7,21 @@ import org.apache.ibatis.annotations.Param;
 
 import com.example.outputmanager.domain.Output;
 
-@Mapper
+@Mapper  // MyBatisにMapperとして認識させる
 public interface OutputMapper {
 
-    List<Output> selectAll();
-
-    Output selectById(@Param("id") Integer id);
-
-    void insert(Output output);
-
-    void update(Output output);
-
-    void delete(@Param("id") Integer id);
-
-    // ★ここが重要：XMLの #{keyword} #{categoryId} #{userId} と一致させる
+    // 一覧（自分のデータ）
+    List<Output> selectByUserId(@Param("userId") Integer userId);
+    // 検索（XMLの <select id="search"> と対応）
     List<Output> search(@Param("keyword") String keyword,
                         @Param("categoryId") Integer categoryId,
                         @Param("userId") Integer userId);
+    // 詳細
+    Output selectById(@Param("id") Integer id);
 
+    // ここが今回のポイント：XMLの <insert id="insert"> 等とメソッド名を合わせる
+    int insert(Output out);   // ← 追加（戻り値は影響件数）
+    int update(Output out);   // ← 追加
+    int delete(@Param("id") Integer id); // ← 追加
     int countByCategoryId(@Param("categoryId") Integer categoryId);
-
-    List<Output> selectByIds(@Param("ids") List<Integer> ids);
-    List<Output> selectByUserId(@Param("userId") Integer userId); 
 }

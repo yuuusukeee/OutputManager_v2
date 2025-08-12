@@ -3,52 +3,76 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.outputmanager.mapper.OutputMapper">
 
+  <!-- 一覧（全件）: 使わないなら残してOK -->
   <select id="selectAll" resultType="com.example.outputmanager.domain.Output">
     SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
     FROM outputs
     ORDER BY created_at DESC
   </select>
 
-  <select id="selectById" resultType="com.example.outputmanager.domain.Output">
+  <!-- 主キー検索 -->
+  <select id="selectById" parameterType="int" resultType="com.example.outputmanager.domain.Output">
     SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
     FROM outputs
     WHERE id = #{id}
   </select>
 
-  <insert id="insert" parameterType="com.example.outputmanager.domain.Output">
-    INSERT INTO outputs (user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at)
-    VALUES (#{userId}, #{categoryId}, #{title}, #{summary}, #{detail}, #{icon}, #{videoUrl}, NOW(), NOW())
+  <!-- 自分の一覧 -->
+  <select id="selectByUserId" parameterType="int" resultType="com.example.outputmanager.domain.Output">
+    SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
+    FROM outputs
+    WHERE user_id = #{userId}
+    ORDER BY created_at DESC
+  </select>
+
+  <!-- 検索（自分のデータに限定） -->
+  <select id="search" resultType="com.example.outputmanager.domain.Output">
+    SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
+    FROM outputs
+    WHERE user_id = #{userId}
+      AND (#{keyword} IS NULL
+           OR title  LIKE CONCAT('%', #{keyword}, '%')
+           OR detail LIKE CONCAT('%', #{keyword}, '%')
+           OR summary LIKE CONCAT('%', #{keyword}, '%'))
+      AND (#{categoryId} IS NULL OR category_id = #{categoryId})
+    ORDER BY created_at DESC
+  </select>
+
+  <!-- INSERT（主キー採番をJavaのentity.idへ） -->
+  <insert id="insert"
+          parameterType="com.example.outputmanager.domain.Output"
+          useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO outputs
+      (user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at)
+    VALUES
+      (#{userId}, #{categoryId}, #{title}, #{summary}, #{detail}, #{icon}, #{videoUrl}, NOW(), NOW())
   </insert>
 
+  <!-- UPDATE（本人データのみ） -->
   <update id="update" parameterType="com.example.outputmanager.domain.Output">
     UPDATE outputs
-    SET title = #{title},
-        summary = #{summary},
-        detail = #{detail},
+    SET title       = #{title},
+        summary     = #{summary},
+        detail      = #{detail},
         category_id = #{categoryId},
-        icon = #{icon},
-        video_url = #{videoUrl},
-        updated_at = NOW()
+        icon        = #{icon},
+        video_url   = #{videoUrl},
+        updated_at  = NOW()
     WHERE id = #{id}
+      AND user_id = #{userId}
   </update>
 
+  <!-- DELETE -->
   <delete id="delete" parameterType="int">
     DELETE FROM outputs WHERE id = #{id}
   </delete>
 
-  <select id="search" resultType="com.example.outputmanager.domain.Output">
-    SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
-    FROM outputs
-    WHERE (#{keyword} IS NULL OR title LIKE CONCAT('%', #{keyword}, '%') OR detail LIKE CONCAT('%', #{keyword}, '%') OR summary LIKE CONCAT('%', #{keyword}, '%'))
-      AND (#{categoryId} IS NULL OR category_id = #{categoryId})
-      AND user_id = #{userId}
-    ORDER BY created_at DESC
-  </select>
-
-  <select id="countByCategoryId" resultType="int">
+  <!-- カテゴリ使用数（カテゴリ削除のガード用） -->
+  <select id="countByCategoryId" parameterType="int" resultType="int">
     SELECT COUNT(*) FROM outputs WHERE category_id = #{categoryId}
   </select>
 
+  <!-- 任意：IDリストでまとめて取得（使っていればそのまま） -->
   <select id="selectByIds" resultType="com.example.outputmanager.domain.Output">
     SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
     FROM outputs
@@ -56,13 +80,6 @@
     <foreach collection="ids" item="id" open="(" separator="," close=")">
       #{id}
     </foreach>
-    
   </select>
-  <select id="selectByUserId" resultType="com.example.outputmanager.domain.Output">
-  SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
-  FROM outputs
-  WHERE user_id = #{userId}
-  ORDER BY created_at DESC
-</select>
 
 </mapper>

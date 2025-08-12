@@ -3,7 +3,6 @@ package com.example.outputmanager.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.example.outputmanager.domain.Output;
 import com.example.outputmanager.mapper.OutputMapper;
@@ -11,7 +10,6 @@ import com.example.outputmanager.mapper.OutputMapper;
 import lombok.RequiredArgsConstructor;
 
 @Service
-@Transactional(rollbackFor = Exception.class)
 @RequiredArgsConstructor
 public class OutputServiceImpl implements OutputService {
 
@@ -19,10 +17,12 @@ public class OutputServiceImpl implements OutputService {
 
     @Override
     public List<Output> getOutputList(Integer userId) {
-        List<Output> list = outputMapper.search(null, null, userId);
-        System.out.println("[DEBUG] mapper outputs size=" + (list == null ? "null" : list.size())
-                           + " userId=" + userId);
-        return list;
+        return outputMapper.selectByUserId(userId);
+    }
+
+    @Override
+    public List<Output> searchOutputs(String keyword, Integer categoryId, Integer userId) {
+        return outputMapper.search(keyword, categoryId, userId);
     }
 
     @Override
@@ -31,22 +31,17 @@ public class OutputServiceImpl implements OutputService {
     }
 
     @Override
-    public void addOutput(Output output) {
-        outputMapper.insert(output);
+    public int addOutput(Output out) {
+        return outputMapper.insert(out); // 1想定
     }
 
     @Override
-    public void updateOutput(Output output) {
-        outputMapper.update(output);
+    public int updateOutput(Output out) {
+        return outputMapper.update(out); // 0/1
     }
 
     @Override
-    public void deleteOutput(Integer id) {
-        outputMapper.delete(id);
-    }
-
-    @Override
-    public List<Output> searchOutputs(String keyword, Integer categoryId, Integer userId) {
-        return outputMapper.search(keyword, categoryId, userId);
+    public int deleteOutput(Integer id) {
+        return outputMapper.delete(id); // 0/1
     }
 }

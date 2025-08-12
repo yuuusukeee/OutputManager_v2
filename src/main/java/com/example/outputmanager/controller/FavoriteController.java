@@ -1,51 +1,77 @@
 package com.example.outputmanager.controller;
 
-import com.example.outputmanager.domain.Output;
-import com.example.outputmanager.domain.Category;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import com.example.outputmanager.service.FavoriteService;
 import com.example.outputmanager.service.OutputService;
-import com.example.outputmanager.service.CategoryService;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpSession;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/favorites")
 @RequiredArgsConstructor
 public class FavoriteController {
+
     private final FavoriteService favoriteService;
-    private final OutputService outputService;
-    private final CategoryService categoryService;
+    private final OutputService outputService; // 存在チェック用（なくても可）
 
-    @GetMapping
-    public String list(HttpSession session, Model model) {
-        Integer userId = (Integer) session.getAttribute("userId");
-        if (userId == null) return "redirect:/";
-        List<Integer> ids = favoriteService.getFavoriteIdsByUser(userId);
-        // N+1回避のための一括取得（Mapperに対応済）
-        List<Output> favorites = ids.isEmpty() ? java.util.List.of() : outputService.searchOutputs(null, null, userId)
-            .stream().filter(o -> ids.contains(o.getId())).collect(Collectors.toList());
+    /** お気に入り追加 */
+    @PostMapping("/favorites/add")
+    public String add(@RequestParam("outputId") Integer outputId,
+                      HttpSession session,
+                      HttpServletRequest request,
+                      RedirectAttributes ra) {
+        Integer uid = (Integer) session.getAttribute("loginUserId");
+        if (uid == null) return "redirect:/login";               // ★未ログインガード
 
-        Map<Integer, String> categoryNameMap = categoryService.getAllCategories().stream()
-            .collect(Collectors.toMap(Category::getId, Category::getName));
+        // （任意）対象が存在しないIDなら一覧に戻す
+        try {
+            if (outputService.getOutputById(outputId) == null) {
+                ra.addFlashAttribute("error", "対象のアウトプットが見つかりません。");
+                return "redirect:/outputs";
+            }
+        } catch (Exception ignored) {}
 
-        model.addAttribute("favorites", favorites);
-        model.addAttribute("categoryNameMap", categoryNameMap);
-        return "favorites/list";
+        try {
+            favoriteService.addFavorite(uid, outputId);          // ★お気に入り登録
+            ra.addFlashAttribute("msg", "お気に入りに追加しました");
+        } catch (DuplicateKeyException e) {
+            // 既に登録済みなら黙って成功扱い
+            ra.addFlashAttribute("msg", "すでにお気に入りに追加済みです");
+        }
+        return redirectBack(request, outputId);
     }
 
-    @PostMapping("/toggle")
-    public String toggleFavorite(@RequestParam Integer outputId, HttpSession session) {
-        Integer userId = (Integer) session.getAttribute("userId");
-        if (userId == null) return "redirect:/";
-        boolean isFav = favoriteService.isFavorite(userId, outputId);
-        if (isFav) favoriteService.removeFavorite(userId, outputId);
-        else favoriteService.addFavorite(userId, outputId);
+    /** お気に入り解除 */
+    @PostMapping("/favorites/remove")
+    public String remove(@RequestParam("outputId") Integer outputId,
+                         HttpSession session,
+                         HttpServletRequest request,
+                         RedirectAttributes ra) {
+        Integer uid = (Integer) session.getAttribute("loginUserId");
+        if (uid == null) return "redirect:/login";               // ★未ログインガード
+
+        favoriteService.removeFavorite(uid, outputId);           // ★お気に入り解除
+        ra.addFlashAttribute("msg", "お気に入りを解除しました");
+        return redirectBack(request, outputId);
+    }
+
+    /** 直前ページへ戻す（Refererが無ければ一覧へ / 明細からなら詳細に戻す） */
+    private String redirectBack(HttpServletRequest req, Integer outputId) {
+        String ref = req.getHeader("Referer");
+        if (ref != null) {
+            // 明細から来ていれば詳細へ戻す
+            if (ref.contains("/outputs/") && !ref.contains("/outputs?")) {
+                return "redirect:/outputs/" + outputId;
+            }
+            // それ以外は基本的に一覧へ
+        }
         return "redirect:/outputs";
     }
 }

@@ -1,30 +1,87 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
-  <title>アウトプット詳細</title>
-  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+  <meta charset="UTF-8">
+  <title th:text="${output != null ? output.title + ' | ' : ''} + 'OutputManager'">アウトプット詳細 | OutputManager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- 見た目用：Bootstrap CDN（ローカルCSSが無くても即反映） -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous">
 </head>
-<body>
-  <div class="container mt-4">
-    <h1 th:text="${output.title}">タイトル</h1>
-    <div class="mb-2">カテゴリ: <span th:text="${categoryNameMap[output.categoryId]}"></span></div>
-    <div class="mb-2">サマリ: <span th:text="${output.summary}"></span></div>
-    <div class="mb-2">詳細: <pre th:text="${output.detail}" style="white-space: pre-wrap;"></pre></div>
-    <div class="mb-2" th:if="${output.icon}">
-      <img th:src="@{${output.icon}}" class="img-thumbnail" style="max-width:300px;" />
-    </div>
-    <div class="mb-2" th:if="${output.videoUrl}">
-      <a th:href="@{${output.videoUrl}}" target="_blank" rel="noopener">動画を見る</a>
-    </div>
-    <div class="mb-2">
-      <form th:action="@{/favorites/toggle}" method="post">
-        <input type="hidden" name="outputId" th:value="${output.id}" />
-        <button type="submit" class="btn" th:classappend="${isFavorite} ? 'btn-warning' : 'btn-outline-warning'">
-          <span th:text="${isFavorite} ? '★お気に入り解除' : '★お気に入り追加'"></span>
-        </button>
-      </form>
-    </div>
-    <a th:href="@{/outputs}" class="btn btn-secondary">一覧に戻る</a>
+<body class="container py-4">
+
+  <!-- ヘッダー -->
+  <header class="d-flex justify-content-between align-items-center mb-4">
+    <a class="navbar-brand h3 m-0" th:href="@{/outputs}">OutputManager</a>
+    <a class="btn btn-outline-secondary" th:href="@{/logout}">ログアウト</a>
+  </header>
+
+  <a class="btn btn-link ps-0" th:href="@{/outputs}">&larr; 一覧へ戻る</a>
+
+  <!-- タイトル -->
+  <h2 class="h4 mt-2" th:text="${output.title}">タイトル</h2>
+
+  <!-- メタ情報（カテゴリ名は Map から解決） -->
+  <div class="text-muted mb-3">
+    <span>カテゴリ：</span>
+    <!-- ★ここが修正点：output.categoryName ではなく Map 参照にする -->
+    <span th:text="${categoryNameMap[output.categoryId] != null ? categoryNameMap[output.categoryId] : output.categoryId}">カテゴリ</span>
+
+    <span class="ms-3">登録日：</span>
+    <span th:text="${#temporals.format(output.createdAt, 'yyyy/MM/dd HH:mm')}">日付</span>
   </div>
+
+  <!-- 概要 -->
+  <section class="mb-3">
+    <h3 class="h6">概要</h3>
+    <p th:text="${output.summary}">概要</p>
+  </section>
+
+  <!-- 詳細 -->
+  <section class="mb-3">
+    <h3 class="h6">詳細</h3>
+    <pre class="p-3 bg-light border" th:text="${output.detail}">詳細</pre>
+  </section>
+
+  <!-- アイコン（任意） -->
+  <section class="mb-3" th:if="${output.icon}">
+    <h3 class="h6">アイコン</h3>
+    <img th:src="${output.icon}" alt="icon" style="max-width: 240px;">
+  </section>
+
+  <!-- 動画URL（任意） -->
+  <section class="mb-4" th:if="${output.videoUrl}">
+    <h3 class="h6">動画URL</h3>
+    <a th:href="${output.videoUrl}" th:text="${output.videoUrl}" target="_blank" rel="noopener">動画リンク</a>
+  </section>
+
+  <!-- お気に入りトグル（所有者でなくても表示OK） -->
+  <div class="mb-4">
+    <!-- 登録済みの判定は favorites 又は isFavorite のどちらでも拾えるように二重化 -->
+    <form th:if="${(favorites != null and favorites.contains(output.id)) or (isFavorite != null and isFavorite)}"
+          th:action="@{/favorites/remove}" method="post" class="d-inline">
+      <input type="hidden" name="outputId" th:value="${output.id}">
+      <button class="btn btn-warning">★ お気に入り解除</button>
+    </form>
+
+    <form th:if="${(favorites == null or !favorites.contains(output.id)) and (isFavorite == null or !isFavorite)}"
+          th:action="@{/favorites/add}" method="post" class="d-inline">
+      <input type="hidden" name="outputId" th:value="${output.id}">
+      <button class="btn btn-outline-secondary">☆ お気に入りに追加</button>
+    </form>
+  </div>
+
+  <!-- 本人のみの編集/削除（owner は Controller で boolean セット） -->
+  <div th:if="${owner}" class="d-flex gap-2">
+    <a class="btn btn-primary" th:href="@{/outputs/{id}/edit(id=${output.id})}">編集</a>
+    <form th:action="@{/outputs/delete/{id}(id=${output.id})}" method="post"
+          onsubmit="return confirm('削除しますか？');">
+      <button class="btn btn-outline-danger" type="submit">削除</button>
+    </form>
+  </div>
+
 </body>
 </html>

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>アウトプット一覧</title>
-
-  <!-- 一旦CDNで見た目確認、OKならローカルCSSに戻してOK -->
+  <meta charset="UTF-8">
+  <title>アウトプット一覧 | OutputManager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CDN -->
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
@@ -12,23 +12,27 @@
 </head>
 <body class="container py-4">
 
-  <div class="d-flex align-items-center justify-content-between mb-3">
+  <!-- ヘッダー -->
+  <header class="d-flex align-items-center justify-content-between mb-3">
     <h1 class="h3 m-0">アウトプット一覧</h1>
     <div class="d-flex gap-2">
-      <a class="btn btn-primary" th:href="@{/outputs/add}">新規登録</a>
-      <a class="btn btn-outline-secondary" th:href="@{/categories}">カテゴリ管理</a>
+      <a class="btn btn-success" th:href="@{/outputs/add}">新規登録</a>
+      <a class="btn btn-outline-secondary" th:href="@{/logout}">ログアウト</a>
     </div>
-  </div>
+  </header>
 
-  <!-- 検索フォーム（GET） -->
+  <!-- フラッシュ -->
+  <div th:if="${msg}" class="alert alert-success" th:text="${msg}">完了</div>
+
+  <!-- 検索 -->
   <form class="row g-2 mb-3" th:action="@{/outputs}" method="get">
     <div class="col-sm-5">
-      <input class="form-control" type="text" name="keyword" placeholder="キーワードで検索"
-             th:value="${keyword}">
+      <input class="form-control" type="text" name="keyword"
+             placeholder="キーワードで検索" th:value="${keyword}">
     </div>
     <div class="col-sm-4">
       <select class="form-select" name="categoryId">
-        <option th:selected="${categoryId == null}" value="">カテゴリ選択</option>
+        <option value="" th:selected="${categoryId == null}">すべて</option>
         <option th:each="c : ${categories}"
                 th:value="${c.id}"
                 th:text="${c.name}"
@@ -37,56 +41,47 @@
       </select>
     </div>
     <div class="col-sm-3 d-grid">
-      <button class="btn btn-dark" type="submit">検索</button>
+      <button class="btn btn-primary" type="submit">検索</button>
     </div>
   </form>
 
-  <table class="table table-sm align-middle">
-    <thead class="table-light">
+  <!-- 一覧 -->
+  <table class="table table-striped align-middle">
+    <thead>
       <tr>
-        <th>タイトル</th>
+        <th style="width:40%;">タイトル</th>
         <th>カテゴリ</th>
         <th>サマリ</th>
-        <th>登録日</th>
-        <th>お気に入り</th>
-        <th>操作</th>
+        <th style="width:140px;">登録日</th>
+        <th style="width:80px;">★</th>
       </tr>
     </thead>
     <tbody>
       <tr th:each="o : ${outputs}">
-        <!-- 詳細へ -->
         <td>
-          <a th:href="@{/outputs/{id}(id=${o.id})}"
-             th:text="${o.title}">title</a>
+          <a th:href="@{|/outputs/${o.id}|}" th:text="${o.title}">title</a>
         </td>
-
-        <!-- カテゴリ名（null安全） -->
-        <td th:text="${categoryNameMap != null and o.categoryId != null and categoryNameMap[o.categoryId] != null
-                      ? categoryNameMap[o.categoryId] : '未設定'}">
-        </td>
-
-        <td th:text="${o.summary}">summary</td>
-        <td th:text="${#temporals.format(o.createdAt, 'yyyy/MM/dd')}">2025/01/01</td>
-
-        <!-- お気に入り（null安全） -->
-        <td>
-          <span th:if="${favorites != null and favorites.contains(o.id)}">★追加済</span>
-          <span th:unless="${favorites != null and favorites.contains(o.id)}">－</span>
-        </td>
-
-        <!-- 編集/削除（URL要注意：/outputs/{id}/edit と /outputs/delete/{id} がコントローラと一致） -->
-        <td class="d-flex gap-2">
-          <a class="btn btn-sm btn-outline-primary"
-             th:href="@{/outputs/{id}/edit(id=${o.id})}">編集</a>
-
-          <form th:action="@{/outputs/delete/{id}(id=${o.id})}" method="post"
-                onsubmit="return confirm('削除しますか？');">
-            <button class="btn btn-sm btn-outline-danger" type="submit">削除</button>
+        <!-- ★ここを Map 参照に戻す -->
+        <td th:text="${categoryNameMap[o.categoryId] != null ? categoryNameMap[o.categoryId] : o.categoryId}">カテゴリ</td>
+        <td th:text="${o.summary}">サマリ</td>
+        <td th:text="${#temporals.format(o.createdAt, 'yyyy/MM/dd')}">日付</td>
+        <td class="text-center">
+          <!-- 既にお気に入り -->
+          <form th:if="${favorites != null and favorites.contains(o.id)}"
+                th:action="@{/favorites/remove}" method="post" class="d-inline">
+            <input type="hidden" name="outputId" th:value="${o.id}">
+            <button class="btn btn-link p-0 text-warning" title="お気に入り解除">★</button>
+          </form>
+          <!-- まだお気に入りでない -->
+          <form th:if="${favorites == null or !favorites.contains(o.id)}"
+                th:action="@{/favorites/add}" method="post" class="d-inline">
+            <input type="hidden" name="outputId" th:value="${o.id}">
+            <button class="btn btn-link p-0 text-secondary" title="お気に入りに追加">☆</button>
           </form>
         </td>
       </tr>
       <tr th:if="${outputs == null or #lists.isEmpty(outputs)}">
-        <td colspan="6" class="text-center text-muted">データがありません</td>
+        <td colspan="5" class="text-center text-muted">データがありません</td>
       </tr>
     </tbody>
   </table>
