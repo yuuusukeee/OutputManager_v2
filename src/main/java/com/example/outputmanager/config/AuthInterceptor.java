@@ -9,24 +9,30 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
+
+    private static final String[] PUBLIC_PREFIXES = {
+        "/", "/home", "/login", "/logout", "/users/register",
+        "/css", "/js", "/images", "/webjars", "/favicon.ico", "/error"
+    };
+
+    private boolean isPublicPath(String path) {
+        for (String p : PUBLIC_PREFIXES) {
+            if ("/".equals(p)) { if ("/".equals(path)) return true; }
+            else if (path.startsWith(p)) { return true; }
+        }
+        return false;
+    }
+
     @Override
     public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) throws Exception {
-        HttpSession session = req.getSession(false);
-        String uri = req.getRequestURI();
+        final String path = req.getRequestURI();
+        if (isPublicPath(path)) return true;
 
-        // 公開パス（ログイン/ユーザー登録/静的）だけは素通し
-        boolean publicPath =
-                uri.equals("/") || uri.startsWith("/login") || uri.startsWith("/logout") ||
-                uri.startsWith("/users/register") ||
-                uri.startsWith("/css") || uri.startsWith("/js") || uri.startsWith("/images");
-
-        if (publicPath) return true;
-
-        // ログイン判定
-        Integer uid = (session == null) ? null : (Integer) session.getAttribute("loginUserId");
+        HttpSession session = req.getSession(false); // 既存のみ
+        Object uid = (session == null) ? null : session.getAttribute("loginUserId");
         if (uid != null) return true;
 
-        res.sendRedirect("/login");
+        res.sendRedirect(req.getContextPath() + "/login");
         return false;
     }
 }

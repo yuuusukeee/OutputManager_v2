@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+<head>
+  <meta charset="UTF-8"/>
+  <title th:text="${pageTitle}">カテゴリ</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+  <!-- ヘッダー共通化 -->
+  <div th:replace="~{fragments/header :: body}"></div>
+
+  <main class="container">
+    <h1 class="page-title" th:text="${pageTitle}">カテゴリ</h1>
+
+    <section class="grid3" th:if="${items != null}">
+      <a class="card-thumb" th:each="o : ${items}"
+         th:href="@{/outputs/{id}(id=${o.id})}">
+         
+        <!-- icon がある場合だけ本物の画像 -->
+        <img th:if="${!#strings.isEmpty(o.icon)}" th:src="${o.icon}" alt="thumbnail">
+
+        <!-- icon が無い場合はプレースホルダー -->
+        <img th:if="${#strings.isEmpty(o.icon)}" th:src="@{/img/placeholder.png}" alt="no image">
+
+        <!-- タイトル -->
+        <div class="thumb-title" th:text="${o.title}">title</div>
+      </a>
+    </section>
+
+    <p th:if="${items == null or #lists.isEmpty(items)}">項目がありません。</p>
+  </main>
+</body>
+</html>

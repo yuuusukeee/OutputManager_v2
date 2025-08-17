@@ -1,46 +1,18 @@
 <!DOCTYPE html>
-<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ログイン | OutputManager</title>
-  <!-- Bootstrap / Icons / 自前CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" th:href="@{/css/app.css}">
+  <meta charset="UTF-8"/><title>Home</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}"/>
 </head>
 <body>
-  <div class="container-narrow">
-    <h1 class="mb-4 fw-bold">OutputManager</h1>
+  <div th:replace="~{fragments/header :: body}"></div>
 
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="h4 mb-3">ログイン</h2>
-
-        <form th:action="@{/login}" method="post" th:object="${loginForm}" class="vstack gap-3">
-          <div>
-            <label class="form-label">ユーザー名</label>
-            <input type="text" class="form-control" th:field="*{name}" placeholder="ユーザー名">
-            <div class="text-danger small" th:errors="*{name}"></div>
-          </div>
-
-          <div>
-            <label class="form-label">パスワード</label>
-            <input type="password" class="form-control" th:field="*{password}" placeholder="パスワード">
-            <div class="text-danger small" th:errors="*{password}"></div>
-          </div>
-
-          <div th:if="${error}" class="alert alert-danger py-2" th:text="${error}">エラー</div>
-
-          <button type="submit" class="btn btn-primary w-100">ログイン</button>
-        </form>
-
-        <div class="text-center mt-3">
-          <a th:href="@{/users/register}" class="link-primary">新規登録はこちら</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <main class="container home-shell">
+    <section class="home-actions">
+      <!-- ★ ここを /outputs/save に変更 -->
+      <a th:href="@{/outputs/save}" class="btn-primary xl">新規作成</a>
+      <a th:href="@{/outputs}" class="btn-secondary xl">アウトプット一覧</a>
+    </section>
+  </main>
 </body>
 </html>

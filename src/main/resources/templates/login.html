@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+<head>
+  <meta charset="UTF-8"/><title>ログイン</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+  <div th:replace="~{fragments/header :: body}"></div>
+
+  <main class="container login-shell">
+    <section class="card login-card">
+      <h1 class="page-title">ログイン</h1>
+
+      <div th:if="${message != null}" class="alert info" th:text="${message}"></div>
+
+      <form th:action="@{/login}" method="post" th:object="${form}" class="vstack-12">
+        <div th:if="${#fields.hasGlobalErrors()}" class="alert danger">
+          <ul><li th:each="e : ${#fields.globalErrors()}" th:text="${e}">error</li></ul>
+        </div>
+
+        <label class="field">
+          <span>ユーザー名</span>
+          <input type="text" th:field="*{name}" autocomplete="username" placeholder="ユーザー名を入力">
+          <small th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="error"></small>
+        </label>
+
+        <label class="field">
+          <span>パスワード</span>
+          <input type="password" th:field="*{password}" autocomplete="current-password" placeholder="パスワードを入力">
+          <small th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error"></small>
+        </label>
+
+        <button type="submit" class="btn-primary xl">ログイン</button>
+      </form>
+
+      <div class="below mt16">
+        <a th:href="@{/users/register}" class="btn-ghost">新規登録</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

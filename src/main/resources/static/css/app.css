@@ -1,24 +1,69 @@
-:root { --om-max: 960px; }
+/* ---------- Base ---------- */
+:root { --gap: 12px; }
+.container { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+.page-title { font-size: 24px; margin: 24px 0 12px; }
+.vstack-12 > * + * { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
 
-body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; }
-.container-narrow { max-width: var(--om-max); margin: 32px auto; padding: 0 16px; }
+/* ---------- Topbar ---------- */
+.topbar { position: sticky; top: 0; background: #f8fafc; border-bottom: 1px solid #e5e7eb; z-index: 10; }
+.topbar-inner { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--gap); padding-block: 16px; }
+.nav-left, .nav-right { display: flex; align-items: center; gap: 12px; }
+.brand { justify-self: center; }
+.brand-link { display: inline-block; padding: 8px 16px; background: #22c55e; border-radius: 12px; font-weight: 700; color: #0f172a; text-decoration: none; }
+.btn-link { text-decoration: none; color: #111827; padding: 4px 6px; border-radius: 8px; }
+.btn-link:hover { background: #eef2ff; }
+.search-box { display: flex; align-items: center; gap: 6px; }
+.search-box input { height: 34px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+.icon-btn { height: 34px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; cursor: pointer; }
 
-.nav-gap { gap: 12px; }
-.table td, .table th { vertical-align: middle; }
+/* ---------- Auth / Home ---------- */
+.login-shell, .home-shell { min-height: 100dvh; display: grid; place-items: center; }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 6px 16px rgba(0,0,0,.05); padding: 20px; }
+.login-card { width: min(520px, 100%); }
+.field { display: grid; gap: 6px; }
+.field input { height: 40px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 10px; width: 100%; }
+.error { color: #b91c1c; }
+.alert { border-radius: 10px; padding: 10px 12px; }
+.alert.info { background:#ecfeff; border:1px solid #bae6fd; color:#0c4a6e; }
+.alert.danger { background:#fee2e2; border:1px solid #fecaca; color:#7f1d1d; }
 
-.star-btn { font-size: 1.1rem; line-height: 1; padding: .25rem .4rem; }
-.category-title { margin-top: 1.75rem; border-bottom: 1px solid #e5e7eb; padding-bottom: .25rem; }
-.output-row { padding: 12px 0; border-bottom: 1px solid #eee; }
-.output-title-line { display:flex; align-items:center; gap: 8px; }
-.output-title-line a { font-weight: 600; }
-.output-meta { color:#666; font-size:.9rem; margin-top:4px; }
-.output-summary { margin-top:6px; }
-.btn { padding:.45rem .9rem; border:1px solid #247cff; border-radius:8px; }
-.btn:hover { background:#247cff; color:#fff; }
-.btn.btn-outline { border-color:#999; color:#333; }
-.btn.btn-outline:hover { background:#f2f2f2; }
-.star-btn { font-size:1.1rem; line-height:1; padding:.15rem .4rem; border:1px solid #ddd; border-radius:6px; background:#fff; cursor:pointer; }
-.star-btn:hover { background:#fff7d6; }
-body {
-    background-color: #f0f0f0; /* 明るいグレー */
+.home-actions { display: grid; gap: 14px; width: min(520px, 100%); }
+
+/* ---------- Buttons ---------- */
+.btn-primary, .btn-secondary, .btn-ghost {
+  display: inline-block; text-align: center; text-decoration: none; cursor: pointer;
+  border-radius: 12px; padding: 12px 16px; border: 1px solid transparent; user-select: none;
 }
+.btn-primary { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+.btn-primary:hover { filter: brightness(1.05); }
+.btn-secondary { background: #e0e7ff; color: #1e3a8a; border-color: #c7d2fe; }
+.btn-secondary:hover { filter: brightness(1.03); }
+.btn-ghost { background: transparent; color: #374151; border-color: #d1d5db; }
+.btn-ghost:hover { background: #f9fafb; }
+.xl { width: 100%; }
+
+/* ---------- Thumbs / Lists ---------- */
+.card-thumb { display: block; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: #fff; }
+
+/* ▼ここを変更：高さを固定して cover で均一表示。aspect-ratio と height:100% は外す */
+.card-thumb img {
+  width: 100%;
+  height: 160px;        /* 任意の高さ（一覧カードの見栄えが揃う） */
+  object-fit: cover;    /* 中央トリミングで均一表示 */
+  border-radius: 8px;   /* 角丸（親にも角丸があるのでお好みで） */
+  display: block;
+}
+
+.thumb-title { padding: 8px 10px; font-size: 14px; color: #111827; }
+
+/* 横スライド（一覧ページ） */
+.hlist-section { margin-top: 20px; }
+.hlist-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.hlist { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
+.hitem { flex: 0 0 auto; width: 200px; scroll-snap-align: start; }
+
+/* 3カラム（カテゴリページ） */
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 960px) { .grid3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .grid3 { grid-template-columns: 1fr; } }

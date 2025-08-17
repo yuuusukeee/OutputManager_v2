@@ -1,0 +1,29 @@
+<!-- fragments/header.html -->
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="body">
+  <header class="topbar">
+    <div class="topbar-inner container">
+
+      <nav class="nav-left" th:if="${session.loginUserId != null}">
+        <a th:href="@{/home}" class="btn-link">Home</a>
+        <a th:href="@{/favorites}" class="btn-link">お気に入り</a>
+        <a th:href="@{/learn}" class="btn-link">学習</a>
+        <a th:href="@{/health}" class="btn-link">健康</a>
+        <a th:href="@{/work}" class="btn-link">仕事</a>
+        <a th:href="@{/life}" class="btn-link">生活</a>
+      </nav>
+
+      <div class="brand">
+        <a th:href="@{/home}" class="brand-link">OutputManager</a>
+      </div>
+
+      <div class="nav-right" th:if="${session.loginUserId != null}">
+        <form th:action="@{/outputs}" method="get" class="search-box">
+          <input type="text" name="keyword" placeholder="キーワードで検索" aria-label="検索">
+          <button type="submit" class="icon-btn">検索</button>
+        </form>
+        <a th:href="@{/logout}" class="btn-link">ログアウト</a>
+      </div>
+
+    </div>
+  </header>
+</div>

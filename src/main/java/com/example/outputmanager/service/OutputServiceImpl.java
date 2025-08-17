@@ -44,4 +44,13 @@ public class OutputServiceImpl implements OutputService {
     public int deleteOutput(Integer id) {
         return outputMapper.delete(id); // 0/1
     }
+    @Override
+    public List<Output> findByCategoryExcludingFavorite(Integer userId, String categoryName) {
+        return outputMapper.selectByUserAndCategoryNameExcludeFav(userId, categoryName);
+    }
+    @Override
+    public Output findById(Long id) {
+        if (id == null) return null;
+        return outputMapper.findById(id); // ← Mapper に委譲（次の手順で用意）
+    }
 }

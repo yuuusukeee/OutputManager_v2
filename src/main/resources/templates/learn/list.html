@@ -2,13 +2,13 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
-  <title th:text="${title}">お気に入り</title>
+  <title th:text="${title}">学習</title>
   <link rel="stylesheet" th:href="@{/css/app.css}"/>
 </head>
 <body>
 	<div th:replace="~{fragments/header :: body}"></div>
   <main class="container">
-    <h2 class="section-title" th:text="${title}">お気に入り</h2>
+    <h2 class="section-title" th:text="${title}">学習</h2>
     <div class="grid-3">
       <div class="card" th:each="o : ${items}">
         <div class="thumb" style="height:100px;border:1px dashed #e5e7eb;border-radius:10px;"></div>

@@ -1,51 +1,144 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8"/>
   <title>アウトプット一覧</title>
   <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-<link rel="stylesheet" th:href="@{/css/app.css}">
-<div class="container-narrow">
 
-  <h1>アウトプット一覧</h1>
+<!-- ===== Topbar ===== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <a th:href="@{/outputs}" class="btn btn-outline">Home</a>
+      <form th:action="@{/outputs}" method="get" style="display:flex; gap:6px;">
+        <input class="input" type="text" name="keyword" placeholder="キーワードで検索"
+               th:value="${keyword}">
+        <select class="input" name="categoryId">
+          <option value="" th:selected="${categoryId == null}">すべて</option>
+          <option th:each="c: ${categories}"
+                  th:value="${c.id}"
+                  th:text="${c.name}"
+                  th:selected="${categoryId != null and categoryId == c.id}">カテゴリ</option>
+        </select>
+        <button class="btn" type="submit">検索</button>
+      </form>
+    </div>
 
-  <div class="nav-gap">
-    <a th:href="@{/outputs/add}" class="btn">新規登録</a>
-    <a th:href="@{/logout}" class="btn btn-outline">ログアウト</a>
-  </div>
+    <div class="brand">OutputManager</div>
 
-  <form method="get" th:action="@{/outputs}" class="nav-gap">
-    <input type="text" name="keyword" placeholder="キーワードで検索" th:value="${keyword}">
-    <select name="categoryId">
-      <option value="" th:selected="${categoryId == null}">すべて</option>
-      <option th:each="c : ${categories}" th:value="${c.id}"
-              th:selected="${categoryId == c.id}" th:text="${c.name}">カテゴリ</option>
-    </select>
-    <button type="submit" class="btn">検索</button>
-  </form>
-
-  <div th:each="entry : ${grouped}">
-    <h2 class="category-title" th:text="${categoryNameMap[entry.key]}">カテゴリ名</h2>
-
-    <div th:each="output : ${entry.value}" class="output-row">
-      <div class="output-title-line">
-        <a th:href="@{|/outputs/${output.id}|}" th:text="${output.title}">タイトル</a>
-        <form th:action="@{|/favorites/toggle/${output.id}|}" method="post" style="display:inline;">
-          <button type="submit" class="star-btn"
-                  th:text="${favorites.contains(output.id) ? '★' : '☆'}"></button>
-        </form>
-      </div>
-
-      <div class="output-meta" th:text="${#temporals.format(output.createdAt, 'yyyy/MM/dd')}">2025/08/12</div>
-      <div class="output-summary"
-           th:text="${!#strings.isEmpty(output.summary) ? output.summary : (#strings.length(output.detail) > 120 ? #strings.substring(output.detail,0,120) + '…' : output.detail)}">
-        サマリ
-      </div>
+    <div class="topbar-right">
+      <!-- ここはコントローラに合わせて /outputs/new -->
+      <a th:href="@{/outputs/new}" class="btn btn-outline">新規登録</a>
+      <a th:href="@{/logout}" class="btn btn-outline">ログアウト</a>
     </div>
   </div>
+</header>
 
-</div>
+<main class="container-narrow">
+
+  <!-- 最近のアウトプット -->
+  <section class="section" th:if="${recent != null and !#lists.isEmpty(recent)}">
+    <h2>最近のアウトプット</h2>
+    <div class="h-scroll">
+      <a class="out-card" th:each="out : ${recent}" th:href="@{/outputs/{id}(id=${out.id})}">
+        <div class="out-title" th:text="${out.title}">タイトル</div>
+        <div class="out-meta">
+          <span th:text="${out.createdAt != null ? #temporals.format(out.createdAt,'yyyy/MM/dd') : ''}">2025/08/12</span>
+          ・
+          <span th:text="${categoryNameMap != null ? categoryNameMap[out.categoryId] : ''}">カテゴリ</span>
+        </div>
+        <div class="out-summary" th:text="${out.summary}">サマリ</div>
+      </a>
+    </div>
+    <div class="divider"></div>
+  </section>
+
+  <!-- お気に入り -->
+  <section class="section" th:if="${favoritesList != null and !#lists.isEmpty(favoritesList)}">
+    <h2>お気に入り</h2>
+    <div class="h-scroll">
+      <a class="out-card" th:each="out : ${favoritesList}" th:href="@{/outputs/{id}(id=${out.id})}">
+        <div class="out-title" th:text="${out.title}">タイトル</div>
+        <div class="out-meta">
+          <span th:text="${out.createdAt != null ? #temporals.format(out.createdAt,'yyyy/MM/dd') : ''}">2025/08/12</span>
+          ・
+          <span th:text="${categoryNameMap != null ? categoryNameMap[out.categoryId] : ''}">カテゴリ</span>
+        </div>
+        <div class="out-summary" th:text="${out.summary}">サマリ</div>
+      </a>
+    </div>
+    <div class="divider"></div>
+  </section>
+
+  <!-- 学習 (id=1) -->
+  <section class="section">
+    <h2>学習</h2>
+    <div th:if="${grouped == null or !grouped.containsKey(1) or #lists.isEmpty(grouped[1])}">項目がありません。</div>
+    <div class="h-scroll" th:if="${grouped != null and grouped.containsKey(1) and !#lists.isEmpty(grouped[1])}">
+      <a class="out-card" th:each="out : ${grouped[1]}" th:href="@{/outputs/{id}(id=${out.id})}">
+        <div class="out-title" th:text="${out.title}">タイトル</div>
+        <div class="out-meta">
+          <span th:text="${out.createdAt != null ? #temporals.format(out.createdAt,'yyyy/MM/dd') : ''}">2025/08/12</span>
+          ・学習
+        </div>
+        <div class="out-summary" th:text="${out.summary}">サマリ</div>
+      </a>
+    </div>
+    <div class="divider"></div>
+  </section>
+
+  <!-- 健康 (id=2) -->
+  <section class="section">
+    <h2>健康</h2>
+    <div th:if="${grouped == null or !grouped.containsKey(2) or #lists.isEmpty(grouped[2])}">項目がありません。</div>
+    <div class="h-scroll" th:if="${grouped != null and grouped.containsKey(2) and !#lists.isEmpty(grouped[2])}">
+      <a class="out-card" th:each="out : ${grouped[2]}" th:href="@{/outputs/{id}(id=${out.id})}">
+        <div class="out-title" th:text="${out.title}">タイトル</div>
+        <div class="out-meta">
+          <span th:text="${out.createdAt != null ? #temporals.format(out.createdAt,'yyyy/MM/dd') : ''}">2025/08/12</span>
+          ・健康
+        </div>
+        <div class="out-summary" th:text="${out.summary}">サマリ</div>
+      </a>
+    </div>
+    <div class="divider"></div>
+  </section>
+
+  <!-- 仕事 (id=3) -->
+  <section class="section">
+    <h2>仕事</h2>
+    <div th:if="${grouped == null or !grouped.containsKey(3) or #lists.isEmpty(grouped[3])}">項目がありません。</div>
+    <div class="h-scroll" th:if="${grouped != null and grouped.containsKey(3) and !#lists.isEmpty(grouped[3])}">
+      <a class="out-card" th:each="out : ${grouped[3]}" th:href="@{/outputs/{id}(id=${out.id})}">
+        <div class="out-title" th:text="${out.title}">タイトル</div>
+        <div class="out-meta">
+          <span th:text="${out.createdAt != null ? #temporals.format(out.createdAt,'yyyy/MM/dd') : ''}">2025/08/12</span>
+          ・仕事
+        </div>
+        <div class="out-summary" th:text="${out.summary}">サマリ</div>
+      </a>
+    </div>
+    <div class="divider"></div>
+  </section>
+
+  <!-- 生活 (id=4) -->
+  <section class="section">
+    <h2>生活</h2>
+    <div th:if="${grouped == null or !grouped.containsKey(4) or #lists.isEmpty(grouped[4])}">項目がありません。</div>
+    <div class="h-scroll" th:if="${grouped != null and grouped.containsKey(4) and !#lists.isEmpty(grouped[4])}">
+      <a class="out-card" th:each="out : ${grouped[4]}" th:href="@{/outputs/{id}(id=${out.id})}">
+        <div class="out-title" th:text="${out.title}">タイトル</div>
+        <div class="out-meta">
+          <span th:text="${out.createdAt != null ? #temporals.format(out.createdAt,'yyyy/MM/dd') : ''}">2025/08/12</span>
+          ・生活
+        </div>
+        <div class="out-summary" th:text="${out.summary}">サマリ</div>
+      </a>
+    </div>
+  </section>
+
+</main>
 </body>
 </html>

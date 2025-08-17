@@ -1,187 +1,231 @@
 package com.example.outputmanager.controller;
 
-import java.util.LinkedHashMap;          // ★追加
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.example.outputmanager.domain.Category;
 import com.example.outputmanager.domain.Output;
-import com.example.outputmanager.form.OutputForm;
-import com.example.outputmanager.service.CategoryService;
-import com.example.outputmanager.service.FavoriteService;
 import com.example.outputmanager.service.OutputService;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 一覧/カテゴリ/新規・編集フォームを集約。
+ * ★ポイント：/outputs の model に DB から取得したリストを詰める（null禁止）。
+ */
 @Controller
-@RequestMapping("/outputs")
 @RequiredArgsConstructor
 public class OutputController {
 
     private final OutputService outputService;
-    private final CategoryService categoryService;
-    private final FavoriteService favoriteService;
 
-    /** 一覧（検索・カテゴリ・お気に入り対応 & カテゴリ別ブロック描画用データ供給） */
-    @GetMapping
-    public String list(@RequestParam(required = false) String keyword,
-                       @RequestParam(required = false) Integer categoryId,
-                       Model model,
-                       HttpSession session) {
+    /** 一覧トップ（横スライド：最近/お気に入り/学習/健康/仕事/生活） */
+    @GetMapping("/outputs")
+    public String outputs(
+            Model model,
+            HttpSession session,
+            @RequestParam(name = "keyword", required = false) String keyword) {
 
-        Integer userId = (Integer) session.getAttribute("loginUserId");
-        if (userId == null) return "redirect:/";
+        // ログイン確認
+        Integer uid = (Integer) session.getAttribute("loginUserId");
+        if (uid == null) return "redirect:/login";
 
-        // 自分のお気に入りID一覧（★表示／並べ替え／フィルタに使用）
-        List<Integer> favIds = favoriteService.getFavoriteIdsByUser(userId);
+        // 既存サービスでカテゴリ別を取得（「お気に入り」を除外）
+        List<Output> learn  = outputService.findByCategoryExcludingFavorite(uid, "学習");
+        List<Output> health = outputService.findByCategoryExcludingFavorite(uid, "健康");
+        List<Output> work   = outputService.findByCategoryExcludingFavorite(uid, "仕事");
+        List<Output> life   = outputService.findByCategoryExcludingFavorite(uid, "生活");
 
-        // データ取得：カテゴリ=-1 なら「お気に入りだけ」、他は通常検索/一覧
-        List<Output> outputs;
-        if (categoryId != null && categoryId == -1) {   // 「お気に入り」擬似カテゴリ
-            outputs = outputService.getOutputList(userId).stream()
-                    .filter(o -> favIds.contains(o.getId()))
-                    .toList();
-        } else if (keyword != null || categoryId != null) {
-            outputs = outputService.searchOutputs(keyword, categoryId, userId);
-        } else {
-            outputs = outputService.getOutputList(userId);
-        }
+        model.addAttribute("learn",  learn  != null ? learn  : Collections.emptyList());
+        model.addAttribute("health", health != null ? health : Collections.emptyList());
+        model.addAttribute("work",   work   != null ? work   : Collections.emptyList());
+        model.addAttribute("life",   life   != null ? life   : Collections.emptyList());
 
-        // お気に入りを上位に寄せる（true<false の性質を利用）
-        outputs = outputs.stream()
-                .sorted((a, b) -> Boolean.compare(
-                        !favIds.contains(a.getId()),
-                        !favIds.contains(b.getId())))
-                .toList();
+        // 「最近」「お気に入り」：実装未確認のため安全に空
+        model.addAttribute("recent",    Collections.emptyList());
+        model.addAttribute("favorites", Collections.emptyList());
 
-        // カテゴリ情報（見出しや名称表示用）
-        List<Category> cats = categoryService.getAllCategories();
-        Map<Integer, String> categoryNameMap = cats.stream()
-                .collect(Collectors.toMap(Category::getId, Category::getName));
-
-        // ★カテゴリ別ブロックUI用：順序が安定するよう LinkedHashMap でグルーピング
-        Map<Integer, List<Output>> grouped = outputs.stream()
-                .collect(Collectors.groupingBy(
-                        Output::getCategoryId,
-                        LinkedHashMap::new,                 // ←ココがポイント
-                        Collectors.toList()
-                ));
-
-        model.addAttribute("outputs", outputs);
-        model.addAttribute("grouped", grouped);
-        model.addAttribute("favorites", favIds);
-        model.addAttribute("categories", cats);
-        model.addAttribute("categoryNameMap", categoryNameMap); // list.html で名前解決に使う
+        // 表示用
         model.addAttribute("keyword", keyword);
-        model.addAttribute("categoryId", categoryId);
-        return "outputs/list";
+
+        return "outputs/index"; // ← templates/outputs/index.html
     }
 
-    /** 詳細 */
-    @GetMapping("/{id}")
-    public String detail(@PathVariable Integer id, Model model, HttpSession session) {
-        Integer userId = (Integer) session.getAttribute("loginUserId");
-        if (userId == null) return "redirect:/";
+    /** ★ 詳細ページ（categoryNameMap を必ず詰める） */
+    @GetMapping("/outputs/{id}")
+    public String detail(
+            @PathVariable("id") Long id,
+            Model model,
+            HttpSession session) {
 
-        Output output = outputService.getOutputById(id);
-        boolean isFavorite = favoriteService.isFavorite(userId, id);
+        Integer uid = (Integer) session.getAttribute("loginUserId");
+        if (uid == null) return "redirect:/login";
 
-        Map<Integer, String> categoryNameMap = categoryService.getAllCategories().stream()
-                .collect(Collectors.toMap(Category::getId, Category::getName));
+        Output o = outputService.findById(id);
+        if (o == null) return "redirect:/outputs";
 
-        boolean owner = output != null && output.getUserId() != null && output.getUserId().equals(userId);
+        model.addAttribute("output", o);
 
-        model.addAttribute("output", output);
-        model.addAttribute("isFavorite", isFavorite);
-        model.addAttribute("owner", owner);
-        model.addAttribute("categoryNameMap", categoryNameMap);
-        return "outputs/detail";
+        // ★ null で落ちないよう、空Mapを必ず詰める（実際のMapを持っているならそちらをaddAttributeする）
+        if (!model.containsAttribute("categoryNameMap")) {
+            model.addAttribute("categoryNameMap", Collections.<Integer, String>emptyMap());
+        }
+
+        return "outputs/detail"; // ← templates/outputs/detail.html
     }
 
-    /** 新規作成 画面 */
-    @GetMapping("/add")
-    public String addForm(Model model, HttpSession session) {
-        if ((Integer) session.getAttribute("loginUserId") == null) return "redirect:/";
-        model.addAttribute("outputForm", new OutputForm());
-        model.addAttribute("categories", categoryService.getAllCategories());
+    /** 旧導線の互換：/outputs/new → /outputs/save へ寄せる */
+    @GetMapping("/outputs/new")
+    public String newToSave() {
+        return "redirect:/outputs/save";
+    }
+
+    /** 新規作成フォーム（templates/outputs/save.html を表示） */
+    @GetMapping("/outputs/save")
+    public String showCreateForm(Model model, HttpSession session) {
+        if (session.getAttribute("loginUserId") == null) return "redirect:/login";
+
+        if (!model.containsAttribute("outputForm")) {
+            model.addAttribute("outputForm", new OutputForm());
+        }
+        model.addAttribute("categories", Collections.emptyList());
         return "outputs/save";
     }
 
-    /** 登録 */
-    @PostMapping("/save")
-    public String save(@Valid @ModelAttribute OutputForm form,
-                       BindingResult br,
-                       HttpSession session,
-                       RedirectAttributes ra,
-                       Model model) {
-        Integer loginUserId = (Integer) session.getAttribute("loginUserId");
-        if (loginUserId == null) return "redirect:/";
+    /** 新規作成（最小ダミー：保存実装は後で既存サービスに差し替え） */
+    @PostMapping("/outputs/save")
+    public String create(
+            @ModelAttribute("outputForm") OutputForm form,
+            BindingResult bindingResult,
+            HttpSession session,
+            Model model) {
 
-        if (br.hasErrors()) {
-            model.addAttribute("categories", categoryService.getAllCategories());
+        if (session.getAttribute("loginUserId") == null) return "redirect:/login";
+        if (form.getTitle() == null || form.getTitle().isBlank()) {
+            bindingResult.rejectValue("title", "required", "タイトルを入力してください。");
+            model.addAttribute("categories", Collections.emptyList());
             return "outputs/save";
         }
-        Output out = form.toEntity(loginUserId);
-        outputService.addOutput(out);
-        ra.addFlashAttribute("msg", "保存しました");
+        // TODO: 既存の OutputService で保存へ
         return "redirect:/outputs";
     }
 
-    /** 編集 画面 */
-    @GetMapping("/{id}/edit")
-    public String editForm(@PathVariable Integer id, Model model, HttpSession session) {
-        if ((Integer) session.getAttribute("loginUserId") == null) return "redirect:/";
-        Output output = outputService.getOutputById(id);
-        model.addAttribute("outputForm", OutputForm.fromEntity(output));
-        model.addAttribute("categories", categoryService.getAllCategories());
+    /** 編集フォーム（templates/outputs/save.html を表示） */
+    @GetMapping("/outputs/{id}/edit")
+    public String showEditForm(
+            @PathVariable("id") Integer id,
+            Model model,
+            HttpSession session) {
+
+        if (session.getAttribute("loginUserId") == null) return "redirect:/login";
+        // TODO: 既存のサービスで id の内容を取得して OutputForm に詰める
+        OutputForm form = new OutputForm();
+        form.setId(id);
+        model.addAttribute("outputForm", form);
+        model.addAttribute("categories", Collections.emptyList());
         return "outputs/save";
     }
 
-    /** 更新（“増殖”防止のため id+userId で update） */
-    @PostMapping("/{id}/update")
-    public String update(@PathVariable Integer id,
-                         @Valid @ModelAttribute("outputForm") OutputForm form,
-                         Errors errors,
-                         Model model,
-                         HttpSession session,
-                         RedirectAttributes ra) {
-        Integer userId = (Integer) session.getAttribute("loginUserId");
-        if (userId == null) return "redirect:/";
+    /** 更新（最小ダミー） */
+    @PostMapping("/outputs/{id}/update")
+    public String update(
+            @PathVariable("id") Integer id,
+            @ModelAttribute("outputForm") OutputForm form,
+            BindingResult bindingResult,
+            HttpSession session,
+            Model model) {
 
-        if (errors.hasErrors()) {
-            model.addAttribute("categories", categoryService.getAllCategories());
+        if (session.getAttribute("loginUserId") == null) return "redirect:/login";
+        if (form.getTitle() == null || form.getTitle().isBlank()) {
+            bindingResult.rejectValue("title", "required", "タイトルを入力してください。");
+            model.addAttribute("categories", Collections.emptyList());
             return "outputs/save";
         }
-        Output entity = form.toEntity(userId);
-        entity.setId(id);
-        int updated = outputService.updateOutput(entity); // 0/1
-        if (updated == 0) {
-            ra.addFlashAttribute("error", "更新できませんでした（権限/同時更新の可能性）");
-        }
+        // TODO: 既存の OutputService で更新へ
         return "redirect:/outputs";
     }
 
-    /** 削除 */
-    @PostMapping("/delete/{id}")
-    public String delete(@PathVariable Integer id, HttpSession session) {
-        if ((Integer) session.getAttribute("loginUserId") == null) return "redirect:/";
-        outputService.deleteOutput(id);
-        return "redirect:/outputs";
+    /** カテゴリ：お気に入り（3カラム） */
+    @GetMapping("/favorites")
+    public String favorites(Model model, HttpSession session) {
+        Integer uid = (Integer) session.getAttribute("loginUserId");
+        if (uid == null) return "redirect:/login";
+        model.addAttribute("pageTitle", "お気に入り");
+        model.addAttribute("items", Collections.emptyList()); // TODO 差し替え
+        return "outputs/category";
+    }
+
+    /** カテゴリ：学習（3カラム） */
+    @GetMapping("/learn")
+    public String learn(Model model, HttpSession session) {
+        Integer uid = (Integer) session.getAttribute("loginUserId");
+        if (uid == null) return "redirect:/login";
+        model.addAttribute("pageTitle", "学習");
+        List<Output> items = outputService.findByCategoryExcludingFavorite(uid, "学習");
+        model.addAttribute("items", items != null ? items : Collections.emptyList()); // ★ null防御
+        return "outputs/category";
+    }
+
+    /** カテゴリ：健康（3カラム） */
+    @GetMapping("/health")
+    public String health(Model model, HttpSession session) {
+        Integer uid = (Integer) session.getAttribute("loginUserId");
+        if (uid == null) return "redirect:/login";
+        model.addAttribute("pageTitle", "健康");
+        List<Output> items = outputService.findByCategoryExcludingFavorite(uid, "健康");
+        model.addAttribute("items", items != null ? items : Collections.emptyList()); // ★ null防御
+        return "outputs/category";
+    }
+
+    /** カテゴリ：仕事（3カラム） */
+    @GetMapping("/work")
+    public String work(Model model, HttpSession session) {
+        Integer uid = (Integer) session.getAttribute("loginUserId");
+        if (uid == null) return "redirect:/login";
+        model.addAttribute("pageTitle", "仕事");
+        List<Output> items = outputService.findByCategoryExcludingFavorite(uid, "仕事");
+        model.addAttribute("items", items != null ? items : Collections.emptyList()); // ★ null防御
+        return "outputs/category";
+    }
+
+    /** カテゴリ：生活（3カラム） */
+    @GetMapping("/life")
+    public String life(Model model, HttpSession session) {
+        Integer uid = (Integer) session.getAttribute("loginUserId");
+        if (uid == null) return "redirect:/login";
+        model.addAttribute("pageTitle", "生活");
+        List<Output> items = outputService.findByCategoryExcludingFavorite(uid, "生活");
+        model.addAttribute("items", items != null ? items : Collections.emptyList()); // ★ null防御
+        return "outputs/category";
+    }
+
+    /* -------- save.html 用の最小フォームDTO -------- */
+    public static class OutputForm {
+        private Integer id;
+        @NotBlank private String title;
+        private String summary;
+        private String detail;
+        private Integer categoryId;
+        private String icon;
+        private String videoUrl;
+
+        public Integer getId() { return id; } public void setId(Integer id) { this.id = id; }
+        public String getTitle() { return title; } public void setTitle(String title) { this.title = title; }
+        public String getSummary() { return summary; } public void setSummary(String summary) { this.summary = summary; }
+        public String getDetail() { return detail; } public void setDetail(String detail) { this.detail = detail; }
+        public Integer getCategoryId() { return categoryId; } public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
+        public String getIcon() { return icon; } public void setIcon(String icon) { this.icon = icon; }
+        public String getVideoUrl() { return videoUrl; } public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
     }
 }

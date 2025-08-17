@@ -46,5 +46,9 @@ public class FavoriteServiceImpl implements FavoriteService {
     public boolean isFavorite(Integer userId, Integer outputId) {
         return favoriteMapper.exists(userId, outputId) > 0;
     }
+    @Override
+    public List<com.example.outputmanager.domain.Output> findOutputsByUser(Integer userId) {
+        return favoriteMapper.selectOutputsByUser(userId);
+    }
     
 }
