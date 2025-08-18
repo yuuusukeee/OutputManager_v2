@@ -1,3 +1,10 @@
+ChatGPT:
+
+よっしゃ！🔥
+templates/outputs/detail.html を カテゴリ部分を ${categoryLabel} に置き換えた完全版に直したぞ。
+これで長い EL 式は消えてスッキリだ。
+
+修正版 detail.html 全文
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
@@ -6,8 +13,8 @@
   <link rel="stylesheet" th:href="@{/css/app.css}"/>
 </head>
 <body>
-  <!-- ※ 1)は完了済みの想定ですが、ここはリクエスト通り現状そのまま -->
-  <div th:replace="~{fragments/header :: body/*}"></div>
+  <!-- 共通ヘッダー -->
+  <div th:replace="~{fragments/header :: body}"></div>
 
   <main class="container" style="max-width:900px; margin:24px auto;">
 
@@ -15,17 +22,11 @@
 
     <h1 th:text="${output != null ? output.title : '（タイトル未設定）'}">タイトル</h1>
 
-    <!-- サムネイル（画像フォールバック） -->
-    <div class="detail-thumb" style="margin:16px 0;">
-      <!-- icon があるなら本物 -->
-      <img th:if="${output != null and !#strings.isEmpty(output.icon)}"
-           th:src="${output.icon}" alt="thumbnail"
-           style="max-width:100%; height:auto;">
-
-      <!-- icon が無いならダミー -->
-      <img th:if="${output == null or #strings.isEmpty(output.icon)}"
-           th:src="@{/img/placeholder.png}" alt="no image"
-           style="max-width:100%; height:auto;">
+    <div class="card-thumb">
+      <img
+        th:src="${#strings.isEmpty(output != null ? output.icon : null) ? '/img/placeholder.png' : output.icon}"
+        alt="thumbnail"
+        th:attr="onerror=|this.onerror=null;this.src='@{/img/placeholder.png}'|">
     </div>
 
     <p>
@@ -39,28 +40,20 @@
       </span>
     </p>
 
-    <!-- カテゴリ名（categoryNameMap が null でも落ちないようにガード） -->
+    <!-- カテゴリ名（Controllerで categoryLabel をセットしておく） -->
     <p>
       カテゴリ:
-      <span th:text="${
-          output != null
-          ? (
-              categoryNameMap != null && categoryNameMap.containsKey(output.categoryId)
-                ? categoryNameMap[output.categoryId]
-                : (output.categoryName != null ? output.categoryName : output.categoryId)
-            )
-          : ''
-        }">カテゴリ</span>
+      <span th:text="${categoryLabel}">カテゴリ</span>
       <span th:if="${output != null && output.favorite}"> / ★お気に入り</span>
     </p>
 
-    <!-- 本文（HTML許可なら utext、プレーンなら text を使う） -->
+    <!-- 本文（HTML許可なら utext、プレーンなら text） -->
     <article th:utext="${output != null ? (output.detail != null ? output.detail : output.content) : ''}">
       本文
     </article>
 
     <!-- 任意: 動画URL -->
-    <div th:if="${output != null && output.videoUrl != null && !#strings.isEmpty(output.videoUrl)}" style="margin-top:16px;">
+    <div th:if="${output != null && !#strings.isEmpty(output.videoUrl)}" style="margin-top:16px;">
       <a th:href="${output.videoUrl}" target="_blank" rel="noopener">関連動画を開く</a>
     </div>
 

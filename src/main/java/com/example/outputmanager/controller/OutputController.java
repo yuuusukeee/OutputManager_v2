@@ -22,13 +22,16 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 一覧/カテゴリ/新規・編集フォームを集約。
- * ★ポイント：/outputs の model に DB から取得したリストを詰める（null禁止）。
+ * /outputs の model に DB から取得したリストを詰める（null禁止）。
  */
 @Controller
 @RequiredArgsConstructor
 public class OutputController {
 
     private final OutputService outputService;
+
+    /** テンプレと揃えたプレースホルダ画像パス */
+    private static final String PLACEHOLDER_ICON = "/img/placeholder.png";
 
     /** 一覧トップ（横スライド：最近/お気に入り/学習/健康/仕事/生活） */
     @GetMapping("/outputs")
@@ -41,28 +44,27 @@ public class OutputController {
         Integer uid = (Integer) session.getAttribute("loginUserId");
         if (uid == null) return "redirect:/login";
 
-        // 既存サービスでカテゴリ別を取得（「お気に入り」を除外）
+        // カテゴリ別（「お気に入り」を除外）
         List<Output> learn  = outputService.findByCategoryExcludingFavorite(uid, "学習");
         List<Output> health = outputService.findByCategoryExcludingFavorite(uid, "健康");
         List<Output> work   = outputService.findByCategoryExcludingFavorite(uid, "仕事");
         List<Output> life   = outputService.findByCategoryExcludingFavorite(uid, "生活");
 
-        model.addAttribute("learn",  learn  != null ? learn  : Collections.emptyList());
-        model.addAttribute("health", health != null ? health : Collections.emptyList());
-        model.addAttribute("work",   work   != null ? work   : Collections.emptyList());
-        model.addAttribute("life",   life   != null ? life   : Collections.emptyList());
+        // null→[] と icon フォールバックを適用
+        model.addAttribute("learn",  safeList(learn));
+        model.addAttribute("health", safeList(health));
+        model.addAttribute("work",   safeList(work));
+        model.addAttribute("life",   safeList(life));
 
-        // 「最近」「お気に入り」：実装未確認のため安全に空
+        // 「最近」「お気に入り」：今は空で安全に
         model.addAttribute("recent",    Collections.emptyList());
         model.addAttribute("favorites", Collections.emptyList());
 
-        // 表示用
         model.addAttribute("keyword", keyword);
-
-        return "outputs/index"; // ← templates/outputs/index.html
+        return "outputs/index"; // templates/outputs/index.html
     }
 
-    /** ★ 詳細ページ（categoryNameMap を必ず詰める） */
+    /** 詳細ページ（categoryLabel を組み立ててテンプレを簡潔に） */
     @GetMapping("/outputs/{id}")
     public String detail(
             @PathVariable("id") Long id,
@@ -75,14 +77,19 @@ public class OutputController {
         Output o = outputService.findById(id);
         if (o == null) return "redirect:/outputs";
 
+        // 単体でも icon フォールバック
+        if (o.getIcon() == null || o.getIcon().isBlank()) {
+            o.setIcon(PLACEHOLDER_ICON);
+        }
         model.addAttribute("output", o);
 
-        // ★ null で落ちないよう、空Mapを必ず詰める（実際のMapを持っているならそちらをaddAttributeする）
-        if (!model.containsAttribute("categoryNameMap")) {
-            model.addAttribute("categoryNameMap", Collections.<Integer, String>emptyMap());
-        }
+        // カテゴリ表示用のラベル（Map 未配線でも落ちない）
+        String categoryLabel = (o.getCategoryId() == null)
+                ? "未分類"
+                : String.valueOf(o.getCategoryId());
+        model.addAttribute("categoryLabel", categoryLabel);
 
-        return "outputs/detail"; // ← templates/outputs/detail.html
+        return "outputs/detail"; // templates/outputs/detail.html
     }
 
     /** 旧導線の互換：/outputs/new → /outputs/save へ寄せる */
@@ -91,7 +98,7 @@ public class OutputController {
         return "redirect:/outputs/save";
     }
 
-    /** 新規作成フォーム（templates/outputs/save.html を表示） */
+    /** 新規作成フォーム */
     @GetMapping("/outputs/save")
     public String showCreateForm(Model model, HttpSession session) {
         if (session.getAttribute("loginUserId") == null) return "redirect:/login";
@@ -103,7 +110,7 @@ public class OutputController {
         return "outputs/save";
     }
 
-    /** 新規作成（最小ダミー：保存実装は後で既存サービスに差し替え） */
+    /** 新規作成（最小ダミー：保存実装は後で差し替え） */
     @PostMapping("/outputs/save")
     public String create(
             @ModelAttribute("outputForm") OutputForm form,
@@ -117,11 +124,11 @@ public class OutputController {
             model.addAttribute("categories", Collections.emptyList());
             return "outputs/save";
         }
-        // TODO: 既存の OutputService で保存へ
+        // TODO: OutputService で保存へ
         return "redirect:/outputs";
     }
 
-    /** 編集フォーム（templates/outputs/save.html を表示） */
+    /** 編集フォーム */
     @GetMapping("/outputs/{id}/edit")
     public String showEditForm(
             @PathVariable("id") Integer id,
@@ -129,7 +136,7 @@ public class OutputController {
             HttpSession session) {
 
         if (session.getAttribute("loginUserId") == null) return "redirect:/login";
-        // TODO: 既存のサービスで id の内容を取得して OutputForm に詰める
+        // TODO: サービスで id の内容を取得して OutputForm に詰める
         OutputForm form = new OutputForm();
         form.setId(id);
         model.addAttribute("outputForm", form);
@@ -152,7 +159,7 @@ public class OutputController {
             model.addAttribute("categories", Collections.emptyList());
             return "outputs/save";
         }
-        // TODO: 既存の OutputService で更新へ
+        // TODO: OutputService で更新へ
         return "redirect:/outputs";
     }
 
@@ -173,7 +180,7 @@ public class OutputController {
         if (uid == null) return "redirect:/login";
         model.addAttribute("pageTitle", "学習");
         List<Output> items = outputService.findByCategoryExcludingFavorite(uid, "学習");
-        model.addAttribute("items", items != null ? items : Collections.emptyList()); // ★ null防御
+        model.addAttribute("items", items != null ? items : Collections.emptyList());
         return "outputs/category";
     }
 
@@ -184,7 +191,7 @@ public class OutputController {
         if (uid == null) return "redirect:/login";
         model.addAttribute("pageTitle", "健康");
         List<Output> items = outputService.findByCategoryExcludingFavorite(uid, "健康");
-        model.addAttribute("items", items != null ? items : Collections.emptyList()); // ★ null防御
+        model.addAttribute("items", items != null ? items : Collections.emptyList());
         return "outputs/category";
     }
 
@@ -195,7 +202,7 @@ public class OutputController {
         if (uid == null) return "redirect:/login";
         model.addAttribute("pageTitle", "仕事");
         List<Output> items = outputService.findByCategoryExcludingFavorite(uid, "仕事");
-        model.addAttribute("items", items != null ? items : Collections.emptyList()); // ★ null防御
+        model.addAttribute("items", items != null ? items : Collections.emptyList());
         return "outputs/category";
     }
 
@@ -206,7 +213,7 @@ public class OutputController {
         if (uid == null) return "redirect:/login";
         model.addAttribute("pageTitle", "生活");
         List<Output> items = outputService.findByCategoryExcludingFavorite(uid, "生活");
-        model.addAttribute("items", items != null ? items : Collections.emptyList()); // ★ null防御
+        model.addAttribute("items", items != null ? items : Collections.emptyList());
         return "outputs/category";
     }
 
@@ -227,5 +234,16 @@ public class OutputController {
         public Integer getCategoryId() { return categoryId; } public void setCategoryId(Integer categoryId) { this.categoryId = categoryId; }
         public String getIcon() { return icon; } public void setIcon(String icon) { this.icon = icon; }
         public String getVideoUrl() { return videoUrl; } public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
+    }
+
+    /** 一覧の null→[] と icon フォールバックを行うユーティリティ */
+    private List<Output> safeList(List<Output> list) {
+        if (list == null) return Collections.emptyList();
+        for (Output o : list) {
+            if (o != null && (o.getIcon() == null || o.getIcon().isBlank())) {
+                o.setIcon(PLACEHOLDER_ICON);
+            }
+        }
+        return list;
     }
 }

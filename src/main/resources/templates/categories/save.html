@@ -1,22 +1,91 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
-  <title>カテゴリ登録・編集</title>
+  <meta charset="UTF-8"/>
+  <title th:text="${pageTitle != null ? pageTitle : ( ${#fields.hasErrors()} ? 'アウトプット編集' : 'アウトプット登録' )}">アウトプット登録・編集</title>
   <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+  <style>
+    .preview-box { width: 240px; }
+    .preview-box img { width:100%; height:160px; object-fit:cover; border-radius:8px; display:block; border:1px solid #e5e7eb; }
+  </style>
 </head>
 <body>
-  <div class="container mt-4">
-    <h1>カテゴリ登録・編集</h1>
-    <form th:action="@{${#httpServletRequest.requestURI}}" th:object="${category}" method="post">
-      <div class="mb-2">
-        <label>カテゴリ名</label>
-        <input type="text" th:field="*{name}" class="form-control" />
-        <div class="text-danger" th:errors="*{name}"></div>
+  <!-- 共通ヘッダー -->
+  <div th:replace="~{fragments/header :: body}"></div>
+
+  <main class="container mt-4">
+    <h1 th:text="${pageTitle != null ? pageTitle : 'アウトプット登録・編集'}">アウトプット登録・編集</h1>
+
+    <!-- action は現在のURL（/outputs/save or /outputs/{id}/update） -->
+    <form th:action="@{${#httpServletRequest.requestURI}}" th:object="${outputForm}" method="post">
+      <!-- CSRF（Security使用時） -->
+      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+      <!-- タイトル -->
+      <div class="mb-3">
+        <label for="title" class="form-label">タイトル</label>
+        <input id="title" type="text" th:field="*{title}" class="form-control" placeholder="例）今日の学習まとめ" required/>
+        <div class="text-danger" th:errors="*{title}"></div>
       </div>
-      <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger" th:text="${#fields.globalErrors()[0].defaultMessage}"></div>
+
+      <!-- 概要 -->
+      <div class="mb-3">
+        <label for="summary" class="form-label">概要（任意）</label>
+        <textarea id="summary" th:field="*{summary}" class="form-control" rows="2" placeholder="短い説明"></textarea>
+      </div>
+
+      <!-- 詳細 -->
+      <div class="mb-3">
+        <label for="detail" class="form-label">詳細（任意・HTML可）</label>
+        <textarea id="detail" th:field="*{detail}" class="form-control" rows="6" placeholder="<p>本文...</p>"></textarea>
+      </div>
+
+      <!-- カテゴリ -->
+      <div class="mb-3">
+        <label for="categoryId" class="form-label">カテゴリ（任意）</label>
+        <input id="categoryId" type="number" th:field="*{categoryId}" class="form-control" placeholder="例）1"/>
+      </div>
+
+      <!-- アイコンURL（任意）＋プレビュー -->
+      <div class="mb-3 row">
+        <div class="col-sm-8">
+          <label for="icon" class="form-label">サムネイル画像URL（任意）</label>
+          <input id="icon" type="url" th:field="*{icon}" class="form-control"
+                 placeholder="例）https://example.com/image.jpg"
+                 oninput="updatePreview(this.value)"/>
+          <div class="form-text">空なら placeholder を表示します。</div>
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label">プレビュー</label>
+          <div class="preview-box">
+            <img id="iconPreview"
+                 th:src="${#strings.isEmpty(outputForm?.icon) ? '/img/placeholder.png' : outputForm.icon}"
+                 alt="preview"
+                 th:attr="onerror=|this.onerror=null;this.src='@{/img/placeholder.png}'|">
+          </div>
+        </div>
+      </div>
+
+      <!-- 全体エラー -->
+      <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger"
+           th:text="${#fields.globalErrors()[0].defaultMessage}"></div>
+
       <button type="submit" class="btn btn-primary">保存</button>
-      <a th:href="@{/categories}" class="btn btn-secondary ms-2">戻る</a>
+      <a th:href="@{/outputs}" class="btn btn-secondary ms-2">戻る</a>
     </form>
-  </div>
+  </main>
+
+  <script>
+    function updatePreview(url) {
+      const img = document.getElementById('iconPreview');
+      if (!url || url.trim() === '') {
+        img.src = '/img/placeholder.png';
+        return;
+      }
+      img.onerror = function() { this.onerror = null; this.src = '/img/placeholder.png'; };
+      img.src = url;
+    }
+  </script>
 </body>
 </html>
