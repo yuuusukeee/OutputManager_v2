@@ -1,7 +1,9 @@
 package com.example.outputmanager.service;
 
-import com.example.outputmanager.domain.Category;
 import java.util.List;
+import java.util.Map;
+
+import com.example.outputmanager.domain.Category;
 
 public interface CategoryService {
     List<Category> getAllCategories();
@@ -9,4 +11,6 @@ public interface CategoryService {
     void addCategory(Category category);
     void editCategory(Category category);
     void deleteCategory(Integer id);
+    List<Category> findAll();         // 一覧取得
+    Map<Integer, String> nameMap();   // 画面用：ID→名前の辞書
 }

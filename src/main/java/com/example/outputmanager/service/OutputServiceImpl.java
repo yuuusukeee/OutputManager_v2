@@ -15,42 +15,45 @@ public class OutputServiceImpl implements OutputService {
 
     private final OutputMapper outputMapper;
 
+    // 既存：カテゴリ名版（互換用）
     @Override
-    public List<Output> getOutputList(Integer userId) {
-        return outputMapper.selectByUserId(userId);
+    public List<Output> findByUserAndCategory(int userId, String categoryName) {
+        return outputMapper.findByUserAndCategory(userId, categoryName);
     }
 
+    // ★新規追加：カテゴリを数値IDで絞り込み（お気に入り除外）
     @Override
-    public List<Output> searchOutputs(String keyword, Integer categoryId, Integer userId) {
-        return outputMapper.search(keyword, categoryId, userId);
+    public List<Output> findByCategoryExcludingFavorite(int userId, int categoryId) {
+        return outputMapper.findByUserAndCategoryExcludeFav(userId, categoryId);
     }
 
+    // ★新規追加：最近N件を取得
     @Override
-    public Output getOutputById(Integer id) {
-        return outputMapper.selectById(id);
+    public List<Output> findRecentByUser(int userId, int limit) {
+        return outputMapper.findRecentByUser(userId, limit);
     }
 
-    @Override
-    public int addOutput(Output out) {
-        return outputMapper.insert(out); // 1想定
-    }
-
-    @Override
-    public int updateOutput(Output out) {
-        return outputMapper.update(out); // 0/1
-    }
-
-    @Override
-    public int deleteOutput(Integer id) {
-        return outputMapper.delete(id); // 0/1
-    }
-    @Override
-    public List<Output> findByCategoryExcludingFavorite(Integer userId, String categoryName) {
-        return outputMapper.selectByUserAndCategoryNameExcludeFav(userId, categoryName);
-    }
+    // 既存：ID検索
     @Override
     public Output findById(Long id) {
-        if (id == null) return null;
-        return outputMapper.findById(id); // ← Mapper に委譲（次の手順で用意）
+        return outputMapper.findById(id);
+    }
+
+    // 既存：保存
+    @Override
+    public void save(Output output) {
+        outputMapper.insert(output);
+    }
+
+    // 既存：更新
+    @Override
+    public void update(Output output) {
+        outputMapper.update(output);
+    }
+
+    // 既存：削除
+    @Override
+    public void delete(Long id) {
+        outputMapper.delete(id);
     }
 }

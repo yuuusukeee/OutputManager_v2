@@ -26,5 +26,10 @@
   <select id="countByName" resultType="int">
     SELECT COUNT(*) FROM categories WHERE name = #{name}
   </select>
+  <select id="findAll" resultType="com.example.outputmanager.domain.Category">
+  SELECT id, name
+  FROM categories
+  ORDER BY id
+</select>
 
 </mapper>

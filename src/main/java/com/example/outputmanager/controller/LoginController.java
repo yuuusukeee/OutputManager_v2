@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 /**
  * ログイン画面の表示と、ログインPOSTを受ける最小実装。
- * まずはUIフローを成立させるために、バリデーションOKならセッションに loginUserId を入れて /home へ。
+ * UIフロー成立を優先し、バリデーションOKならセッションに loginUserId を入れて /outputs へ。
  * （後で実DB照合に置き換え可能：TODO印を参照）
  */
 @Controller
@@ -51,8 +51,8 @@ public class LoginController {
         session.setAttribute("loginUserId", userId);
         session.setAttribute("loginUserName", form.getName());
 
-        // ログイン後の着地
-        return "redirect:/home";
+        // ログイン後の着地先 → /outputs に修正
+        return "redirect:/outputs";
     }
 
     /** ログインフォームの最小DTO（既存DTOがあれば置き換え可） */

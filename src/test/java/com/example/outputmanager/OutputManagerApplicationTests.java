@@ -1,10 +1,10 @@
-package com.example.app;
+package com.example.outputmanager;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class OutputManegerApplicationTests {
+class OutputManagerApplicationTests {
 
 	@Test
 	void contextLoads() {

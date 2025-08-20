@@ -6,23 +6,24 @@ import com.example.outputmanager.domain.Output;
 
 public interface OutputService {
 
-    // 既存互換：自分の一覧
-    List<Output> getOutputList(Integer userId);
+    // 既存のカテゴリ名版（互換用、今後は不使用想定）
+    List<Output> findByUserAndCategory(int userId, String categoryName);
 
-    // 既存互換：検索
-    List<Output> searchOutputs(String keyword, Integer categoryId, Integer userId);
+    // ★新規追加：カテゴリを数値IDで絞り込み（お気に入り除外）
+    List<Output> findByCategoryExcludingFavorite(int userId, int categoryId);
 
-    // 既存互換：主キー取得（Integer版）
-    Output getOutputById(Integer id);
+    // ★新規追加：最近N件を取得
+    List<Output> findRecentByUser(int userId, int limit);
 
-    // 既存互換：登録/更新/削除
-    int addOutput(Output out);
-    int updateOutput(Output out);
-    int deleteOutput(Integer id);
-
-    // 既存実装：カテゴリ名で取得（お気に入り除外）
-    List<Output> findByCategoryExcludingFavorite(Integer userId, String categoryName);
-
-    // ★ 新規追加：主キー取得（Long版）→ Controllerの /outputs/{id} から呼ぶ
+    // 既存のID検索
     Output findById(Long id);
+
+    // 既存の保存
+    void save(Output output);
+
+    // 既存の更新
+    void update(Output output);
+
+    // 既存の削除
+    void delete(Long id);
 }

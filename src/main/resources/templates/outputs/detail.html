@@ -1,62 +1,39 @@
-ChatGPT:
-
-よっしゃ！🔥
-templates/outputs/detail.html を カテゴリ部分を ${categoryLabel} に置き換えた完全版に直したぞ。
-これで長い EL 式は消えてスッキリだ。
-
-修正版 detail.html 全文
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ja">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
-  <title th:text="${output != null ? output.title : '詳細'}">Output Detail</title>
+  <title>Output Detail</title>
   <link rel="stylesheet" th:href="@{/css/app.css}"/>
 </head>
 <body>
-  <!-- 共通ヘッダー -->
-  <div th:replace="~{fragments/header :: body}"></div>
+<div th:replace="fragments/header :: body/*"></div>
 
-  <main class="container" style="max-width:900px; margin:24px auto;">
+<main class="container">
+  <h2 th:text="${output.title}">タイトル</h2>
 
-    <a th:href="@{/outputs}">← 一覧に戻る</a>
+  <p><strong>カテゴリ：</strong>
+    <span th:text="${categoryLabel}">未分類</span>
+  </p>
 
-    <h1 th:text="${output != null ? output.title : '（タイトル未設定）'}">タイトル</h1>
+  <p><strong>概要：</strong>
+    <span th:text="${output.summary}">概要</span>
+  </p>
 
-    <div class="card-thumb">
-      <img
-        th:src="${#strings.isEmpty(output != null ? output.icon : null) ? '/img/placeholder.png' : output.icon}"
-        alt="thumbnail"
-        th:attr="onerror=|this.onerror=null;this.src='@{/img/placeholder.png}'|">
-    </div>
+  <p><strong>詳細：</strong>
+    <span th:text="${output.detail}">詳細</span>
+  </p>
 
-    <p>
-      作成:
-      <span th:text="${output != null && output.createdAt != null
-                      ? #temporals.format(output.createdAt,'yyyy-MM-dd HH:mm')
-                      : ''}">2025-08-17 12:00</span>
-      <span th:if="${output != null && output.updatedAt != null}">
-        / 更新:
-        <span th:text="${#temporals.format(output.updatedAt,'yyyy-MM-dd HH:mm')}">2025-08-17 12:00</span>
-      </span>
-    </p>
+  <p><strong>お気に入り：</strong>
+    <span th:text="${favored} ? '★ 登録済み' : '☆ 未登録'"></span>
+  </p>
 
-    <!-- カテゴリ名（Controllerで categoryLabel をセットしておく） -->
-    <p>
-      カテゴリ:
-      <span th:text="${categoryLabel}">カテゴリ</span>
-      <span th:if="${output != null && output.favorite}"> / ★お気に入り</span>
-    </p>
+  <p><strong>作成日：</strong>
+    <span th:text="${output.createdAt}">2025-01-01</span>
+  </p>
 
-    <!-- 本文（HTML許可なら utext、プレーンなら text） -->
-    <article th:utext="${output != null ? (output.detail != null ? output.detail : output.content) : ''}">
-      本文
-    </article>
-
-    <!-- 任意: 動画URL -->
-    <div th:if="${output != null && !#strings.isEmpty(output.videoUrl)}" style="margin-top:16px;">
-      <a th:href="${output.videoUrl}" target="_blank" rel="noopener">関連動画を開く</a>
-    </div>
-
-  </main>
+  <p><strong>更新日：</strong>
+    <span th:text="${output.updatedAt}">2025-01-02</span>
+  </p>
+</main>
 </body>
 </html>

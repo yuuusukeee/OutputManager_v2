@@ -1,36 +1,29 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.example.outputmanager.mapper.FavoriteMapper">
 
-  <insert id="insert" parameterType="com.example.outputmanager.domain.Favorite">
-    INSERT INTO favorites (user_id, output_id, created_at)
-    VALUES (#{userId}, #{outputId}, NOW())
-  </insert>
-
-  <delete id="delete">
-    DELETE FROM favorites WHERE user_id = #{userId} AND output_id = #{outputId}
-  </delete>
-
-  <select id="selectByUserId" resultType="com.example.outputmanager.domain.Favorite">
-    SELECT id, user_id, output_id, created_at
-    FROM favorites
-    WHERE user_id = #{userId}
+  <!-- ユーザーのお気に入り Output 一覧を取得 -->
+  <select id="selectOutputsByUser"
+          parameterType="int"
+          resultType="com.example.outputmanager.domain.Output">
+    SELECT
+      o.id,
+      o.user_id     AS userId,
+      o.category_id AS categoryId,
+      o.title,
+      o.summary,
+      o.detail,
+      o.icon,
+      o.video_url   AS videoUrl,
+      o.created_at  AS createdAt,
+      o.updated_at  AS updatedAt
+    FROM favorites f
+    JOIN outputs o ON o.id = f.output_id
+    WHERE f.user_id = #{param1}
+    ORDER BY o.created_at DESC
   </select>
 
-  <select id="exists" resultType="int">
-    SELECT COUNT(*) FROM favorites WHERE user_id = #{userId} AND output_id = #{outputId}
-  </select>
-<!-- ユーザのお気に入り Output 一覧 -->
-<select id="selectOutputsByUser"
-        parameterType="int"
-        resultType="com.example.outputmanager.domain.Output">
-  SELECT
-    o.id, o.user_id, o.category_id, o.title, o.summary, o.detail, o.icon, o.video_url,
-    o.created_at, o.updated_at
-  FROM favorites f
-  JOIN outputs o ON o.id = f.output_id
-  WHERE f.user_id = #{param1}
-  ORDER BY o.created_at DESC
-</select>
 </mapper>

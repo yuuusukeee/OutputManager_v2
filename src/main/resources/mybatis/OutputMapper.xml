@@ -1,114 +1,63 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.outputmanager.mapper.OutputMapper">
+package com.example.outputmanager.mapper;
 
-  <!-- 一覧（全件） -->
-  <select id="selectAll" resultType="com.example.outputmanager.domain.Output">
-    SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
-    FROM outputs
-    ORDER BY created_at DESC
-  </select>
+import java.util.List;
 
-  <!-- 主キー検索（従来版：int）※既存互換で残す -->
-  <select id="selectById" parameterType="int" resultType="com.example.outputmanager.domain.Output">
-    SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
-    FROM outputs
-    WHERE id = #{id}
-  </select>
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
-  <!-- ★ 新規：主キー検索（Long統一） -->
-  <select id="findById" parameterType="long" resultType="com.example.outputmanager.domain.Output">
-    SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
-    FROM outputs
-    WHERE id = #{id}
-  </select>
+import com.example.outputmanager.domain.Output;
 
-  <!-- 自分の一覧 -->
-  <select id="selectByUserId" parameterType="int" resultType="com.example.outputmanager.domain.Output">
-    SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
-    FROM outputs
-    WHERE user_id = #{userId}
-    ORDER BY created_at DESC
-  </select>
+@Mapper
+public interface OutputMapper {
 
-  <!-- 検索（自分のデータに限定） -->
-  <select id="search" resultType="com.example.outputmanager.domain.Output">
-    SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
-    FROM outputs
-    WHERE user_id = #{userId}
-      AND (
-            #{keyword} IS NULL
-         OR title   LIKE CONCAT('%', #{keyword}, '%')
-         OR detail  LIKE CONCAT('%', #{keyword}, '%')
-         OR summary LIKE CONCAT('%', #{keyword}, '%')
-          )
-      AND (#{categoryId} IS NULL OR category_id = #{categoryId})
-    ORDER BY created_at DESC
-  </select>
+    // --- 既存系 ---
 
-  <!-- INSERT（主キー採番をJavaのentity.idへ） -->
-  <insert id="insert"
-          parameterType="com.example.outputmanager.domain.Output"
-          useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO outputs
-      (user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at)
-    VALUES
-      (#{userId}, #{categoryId}, #{title}, #{summary}, #{detail}, #{icon}, #{videoUrl}, NOW(), NOW())
-  </insert>
+    // 主キー検索（Integer版：互換用）
+    Output selectById(@Param("id") Integer id);
 
-  <!-- UPDATE（本人データのみ） -->
-  <update id="update" parameterType="com.example.outputmanager.domain.Output">
-    UPDATE outputs
-    SET title       = #{title},
-        summary     = #{summary},
-        detail      = #{detail},
-        category_id = #{categoryId},
-        icon        = #{icon},
-        video_url   = #{videoUrl},
-        updated_at  = NOW()
-    WHERE id = #{id}
-      AND user_id = #{userId}
-  </update>
+    // 主キー検索（Long版）
+    Output findById(@Param("id") Long id);
 
-  <!-- DELETE -->
-  <delete id="delete" parameterType="int">
-    DELETE FROM outputs WHERE id = #{id}
-  </delete>
+    // ユーザーIDで一覧取得
+    List<Output> selectByUserId(@Param("userId") Integer userId);
 
-  <!-- カテゴリ使用数（カテゴリ削除のガード用） -->
-  <select id="countByCategoryId" parameterType="int" resultType="int">
-    SELECT COUNT(*) FROM outputs WHERE category_id = #{categoryId}
-  </select>
+    // 検索（キーワード + カテゴリ + ユーザー）
+    List<Output> search(
+        @Param("keyword") String keyword,
+        @Param("categoryId") Integer categoryId,
+        @Param("userId") Integer userId
+    );
 
-  <!-- 任意：IDリストでまとめて取得 -->
-  <select id="selectByIds" resultType="com.example.outputmanager.domain.Output">
-    SELECT id, user_id, category_id, title, summary, detail, icon, video_url, created_at, updated_at
-    FROM outputs
-    WHERE id IN
-    <foreach collection="ids" item="id" open="(" separator="," close=")">
-      #{id}
-    </foreach>
-  </select>
+    // 新規登録
+    int insert(Output output);
 
-  <!-- ユーザー×カテゴリ名で取得（お気に入りを除外） -->
-  <!-- 既存は param1/param2 だったが、@Param 名に合わせて置き換え -->
-  <select id="selectByUserAndCategoryNameExcludeFav"
-          resultType="com.example.outputmanager.domain.Output">
-    SELECT
-      o.id, o.user_id, o.category_id, o.title, o.summary, o.detail, o.icon, o.video_url,
-      o.created_at, o.updated_at
-    FROM outputs o
-    JOIN categories c ON c.id = o.category_id
-    WHERE o.user_id = #{userId}
-      AND c.name = #{categoryName}
-      AND NOT EXISTS (
-        SELECT 1
-        FROM favorites f
-        WHERE f.user_id = o.user_id
-          AND f.output_id = o.id
-      )
-    ORDER BY o.created_at DESC
-  </select>
+    // 更新
+    int update(Output output);
 
-</mapper>
+    // 削除（Longに統一）
+    int delete(@Param("id") Long id);
+
+
+    // --- 互換：カテゴリ名ベース（必要なら残す） ---
+
+    // ユーザー×カテゴリ名（お気に入り除外）※旧API互換
+    List<Output> findByUserAndCategory(
+        @Param("userId") Integer userId,
+        @Param("categoryName") String categoryName
+    );
+
+
+    // --- 新規：数値IDベース ---
+
+    // ユーザー×カテゴリID（お気に入り除外）
+    List<Output> findByUserAndCategoryExcludeFav(
+        @Param("userId") int userId,
+        @Param("categoryId") int categoryId
+    );
+
+    // 最近N件（ユーザー別）
+    List<Output> findRecentByUser(
+        @Param("userId") int userId,
+        @Param("limit") int limit
+    );
+}
