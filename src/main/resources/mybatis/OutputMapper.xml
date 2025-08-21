@@ -1,63 +1,154 @@
-package com.example.outputmanager.mapper;
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapperPUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-import java.util.List;
+<mapper namespace="com.example.outputmanager.mapper.OutputMapper">
 
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
+  <!-- 共通列 -->
+  <sql id="columns">
+    id,
+    user_id     AS userId,
+    category_id AS categoryId,
+    title,
+    summary,
+    detail,
+    icon,
+    video_url   AS videoUrl,
+    created_at  AS createdAt,
+    updated_at  AS updatedAt
+  </sql>
 
-import com.example.outputmanager.domain.Output;
+  <!-- ===== 基本CRUD ===== -->
 
-@Mapper
-public interface OutputMapper {
+  <!-- 互換：全件取得（必要に応じて使用） -->
+  <select id="selectAll" resultType="com.example.outputmanager.domain.Output">
+    SELECT <include refid="columns"/>
+    FROM outputs
+    ORDER BY created_at DESC, id DESC
+  </select>
 
-    // --- 既存系 ---
+  <!-- 主キー検索（Integer互換） -->
+  <select id="selectById" parameterType="int" resultType="com.example.outputmanager.domain.Output">
+    SELECT <include refid="columns"/>
+    FROM outputs
+    WHERE id = #{id}
+  </select>
 
-    // 主キー検索（Integer版：互換用）
-    Output selectById(@Param("id") Integer id);
+  <!-- 主キー検索（Long統一） -->
+  <select id="findById" parameterType="long" resultType="com.example.outputmanager.domain.Output">
+    SELECT <include refid="columns"/>
+    FROM outputs
+    WHERE id = #{id}
+  </select>
 
-    // 主キー検索（Long版）
-    Output findById(@Param("id") Long id);
+  <!-- ユーザーの全出力 -->
+  <select id="selectByUserId" parameterType="int" resultType="com.example.outputmanager.domain.Output">
+    SELECT <include refid="columns"/>
+    FROM outputs
+    WHERE user_id = #{userId}
+    ORDER BY created_at DESC, id DESC
+  </select>
 
-    // ユーザーIDで一覧取得
-    List<Output> selectByUserId(@Param("userId") Integer userId);
+  <!-- タイトル検索（タイトルのみ / user必須 / categoryId任意） -->
+  <select id="search" resultType="com.example.outputmanager.domain.Output">
+    SELECT <include refid="columns"/>
+    FROM outputs
+    <where>
+      user_id = #{userId}
+      <if test="categoryId != null">
+        AND category_id = #{categoryId}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND title LIKE CONCAT('%', #{keyword}, '%')
+      </if>
+    </where>
+    ORDER BY created_at DESC, id DESC
+  </select>
 
-    // 検索（キーワード + カテゴリ + ユーザー）
-    List<Output> search(
-        @Param("keyword") String keyword,
-        @Param("categoryId") Integer categoryId,
-        @Param("userId") Integer userId
-    );
+  <!-- INSERT（created_at/updated_at はDBに任せる想定） -->
+  <insert id="insert" parameterType="com.example.outputmanager.domain.Output" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO outputs
+      (user_id, category_id, title, summary, detail, icon, video_url)
+    VALUES
+      (#{userId}, #{categoryId}, #{title}, #{summary}, #{detail}, #{icon}, #{videoUrl})
+  </insert>
 
-    // 新規登録
-    int insert(Output output);
+  <!-- UPDATE（updated_at はDBの ON UPDATE に任せる想定） -->
+  <update id="update" parameterType="com.example.outputmanager.domain.Output">
+    UPDATE outputs
+    SET
+      user_id     = #{userId},
+      category_id = #{categoryId},
+      title       = #{title},
+      summary     = #{summary},
+      detail      = #{detail},
+      icon        = #{icon},
+      video_url   = #{videoUrl}
+    WHERE id = #{id}
+  </update>
 
-    // 更新
-    int update(Output output);
+  <!-- DELETE（Long/Integerいずれでも可） -->
+  <delete id="delete">
+    DELETE FROM outputs
+    WHERE id = #{id}
+  </delete>
 
-    // 削除（Longに統一）
-    int delete(@Param("id") Long id);
+  <!-- ===== 補助 ===== -->
 
+  <!-- カテゴリ使用数（削除ガード用） -->
+  <select id="countByCategoryId" parameterType="int" resultType="int">
+    SELECT COUNT(*) FROM outputs WHERE category_id = #{categoryId}
+  </select>
 
-    // --- 互換：カテゴリ名ベース（必要なら残す） ---
+  <!-- IDリストで取得 -->
+  <select id="selectByIds" resultType="com.example.outputmanager.domain.Output">
+    SELECT <include refid="columns"/>
+    FROM outputs
+    WHERE id IN
+    <foreach item="id" collection="ids" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    ORDER BY created_at DESC, id DESC
+  </select>
 
-    // ユーザー×カテゴリ名（お気に入り除外）※旧API互換
-    List<Output> findByUserAndCategory(
-        @Param("userId") Integer userId,
-        @Param("categoryName") String categoryName
-    );
+  <!-- ===== 旧API互換：カテゴリ名ベース（お気に入り除外）===== -->
+  <select id="selectByUserAndCategoryNameExcludeFav" resultType="com.example.outputmanager.domain.Output">
+    SELECT <include refid="columns"/>
+    FROM outputs o
+    JOIN categories c ON c.id = o.category_id
+    WHERE o.user_id = #{userId}
+      AND c.name = #{categoryName}
+      AND NOT EXISTS (
+        SELECT 1 FROM favorites f
+        WHERE f.user_id = o.user_id
+          AND f.output_id = o.id
+      )
+    ORDER BY o.created_at DESC, o.id DESC
+  </select>
 
+  <!-- ===== 新API：カテゴリIDベース ===== -->
 
-    // --- 新規：数値IDベース ---
+  <!-- ユーザー×カテゴリID（お気に入り除外） -->
+  <select id="findByUserAndCategoryExcludeFav" resultType="com.example.outputmanager.domain.Output">
+    SELECT <include refid="columns"/>
+    FROM outputs o
+    WHERE o.user_id = #{userId}
+      AND o.category_id = #{categoryId}
+      AND NOT EXISTS (
+        SELECT 1 FROM favorites f
+        WHERE f.user_id = #{userId}
+          AND f.output_id = o.id
+      )
+    ORDER BY o.created_at DESC, o.id DESC
+  </select>
 
-    // ユーザー×カテゴリID（お気に入り除外）
-    List<Output> findByUserAndCategoryExcludeFav(
-        @Param("userId") int userId,
-        @Param("categoryId") int categoryId
-    );
+  <!-- 最近N件（ユーザー別） -->
+  <select id="findRecentByUser" resultType="com.example.outputmanager.domain.Output">
+    SELECT <include refid="columns"/>
+    FROM outputs
+    WHERE user_id = #{userId}
+    ORDER BY created_at DESC, id DESC
+    LIMIT #{limit}
+  </select>
 
-    // 最近N件（ユーザー別）
-    List<Output> findRecentByUser(
-        @Param("userId") int userId,
-        @Param("limit") int limit
-    );
-}
+</mapper>
