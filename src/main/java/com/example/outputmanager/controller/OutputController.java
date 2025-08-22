@@ -43,16 +43,17 @@ public class OutputController {
         // ★お気に入り
         model.addAttribute("favorites", favoriteService.findOutputsByUser(uid));
 
-        // 各カテゴリ
-        model.addAttribute("learning", outputService.findByCategoryExcludingFavorite(uid, 1));
-        model.addAttribute("health",   outputService.findByCategoryExcludingFavorite(uid, 2));
-        model.addAttribute("work",     outputService.findByCategoryExcludingFavorite(uid, 3));
-        model.addAttribute("life",     outputService.findByCategoryExcludingFavorite(uid, 4));
+        // 各カテゴリ（テンプレに合わせて learn/health/work/life のキーで供給）
+        model.addAttribute("learn",  outputService.findByCategoryExcludingFavorite(uid, 1));
+        model.addAttribute("health", outputService.findByCategoryExcludingFavorite(uid, 2));
+        model.addAttribute("work",   outputService.findByCategoryExcludingFavorite(uid, 3));
+        model.addAttribute("life",   outputService.findByCategoryExcludingFavorite(uid, 4));
 
-        return "outputs/list";
+        // 最終採用テンプレート
+        return "outputs/index";
     }
 
-    /** 新規作成フォーム */
+    /** 新規作成フォーム（※フォーム統一は後続⑥で仕上げ） */
     @GetMapping("/outputs/new")
     public String showCreateForm(Model model, HttpSession session) {
         Integer uid = (Integer) session.getAttribute("loginUserId");
@@ -61,10 +62,11 @@ public class OutputController {
         }
         model.addAttribute("output", new Output());
         model.addAttribute("categories", categoryService.findAll()); // ★カテゴリ実データ
+        // 現状は従来通りのテンプレを使い、⑥で outputs/save へ統一予定
         return "outputs/new";
     }
 
-    /** 編集フォーム */
+    /** 編集フォーム（※フォーム統一は後続⑥で仕上げ） */
     @GetMapping("/outputs/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model, HttpSession session) {
         Integer uid = (Integer) session.getAttribute("loginUserId");
@@ -77,6 +79,7 @@ public class OutputController {
         }
         model.addAttribute("output", o);
         model.addAttribute("categories", categoryService.findAll()); // ★カテゴリ実データ
+        // 現状は従来通りのテンプレを使い、⑥で outputs/save へ統一予定
         return "outputs/edit";
     }
 
@@ -94,8 +97,8 @@ public class OutputController {
         }
         model.addAttribute("output", o);
 
-        // ★お気に入り判定
-        boolean favored = favoriteService.isFavorite(uid, o.getId().intValue());
+        // ★お気に入り判定（Longに統一）
+        boolean favored = favoriteService.isFavorite(uid, o.getId());
         model.addAttribute("favored", favored);
 
         // ★カテゴリ名
@@ -108,7 +111,7 @@ public class OutputController {
         return "outputs/detail";
     }
 
-    /** 保存処理 */
+    /** 保存処理（新規/更新 兼用） */
     @PostMapping("/outputs/save")
     public String save(@ModelAttribute Output output, HttpSession session) {
         Integer uid = (Integer) session.getAttribute("loginUserId");

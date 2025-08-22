@@ -6,8 +6,11 @@ import lombok.Data;
 
 @Data
 public class Favorite {
-    private Integer id;          // favorites.id（INTのままでOK）
-    private Integer userId;      // favorites.user_id
-    private Long outputId;       // ★ favorites.output_id → Output.id(BIGINT) に合わせて Long
-    private LocalDateTime createdAt; // favorites.created_at
+    private Integer id;          // favorites.id は従来どおり INT 想定
+    private Integer userId;
+
+    /** favorites.output_id → BIGINT に合わせ Long へ */
+    private Long outputId;
+
+    private LocalDateTime createdAt;
 }

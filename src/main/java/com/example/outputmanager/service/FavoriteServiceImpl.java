@@ -19,7 +19,7 @@ public class FavoriteServiceImpl implements FavoriteService {
     private final FavoriteMapper favoriteMapper;
 
     @Override
-    public void addFavorite(Integer userId, Integer outputId) {
+    public void addFavorite(Integer userId, Long outputId) {
         Favorite fav = new Favorite();
         fav.setUserId(userId);
         fav.setOutputId(outputId);
@@ -27,12 +27,12 @@ public class FavoriteServiceImpl implements FavoriteService {
     }
 
     @Override
-    public void removeFavorite(Integer userId, Integer outputId) {
+    public void removeFavorite(Integer userId, Long outputId) {
         favoriteMapper.delete(userId, outputId);
     }
 
     @Override
-    public List<Integer> getFavoriteIdsByUser(Integer userId) {
+    public List<Long> getFavoriteIdsByUser(Integer userId) {
         List<Favorite> favs = favoriteMapper.selectByUserId(userId);
         return favs.stream().map(Favorite::getOutputId).collect(Collectors.toList());
     }
@@ -43,12 +43,12 @@ public class FavoriteServiceImpl implements FavoriteService {
     }
 
     @Override
-    public boolean isFavorite(Integer userId, Integer outputId) {
+    public boolean isFavorite(Integer userId, Long outputId) {
         return favoriteMapper.exists(userId, outputId) > 0;
     }
+
     @Override
     public List<com.example.outputmanager.domain.Output> findOutputsByUser(Integer userId) {
         return favoriteMapper.selectOutputsByUser(userId);
     }
-    
 }

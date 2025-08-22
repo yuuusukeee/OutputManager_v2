@@ -11,18 +11,18 @@ import com.example.outputmanager.domain.Output;
 @Mapper
 public interface FavoriteMapper {
 
-    // 追加
+    // 追加（複合UNIQUE (user_id, output_id) により二重登録はDBで防止）
     void insert(Favorite favorite);
 
     // 解除
-    int delete(@Param("userId") Integer userId, @Param("outputId") Integer outputId);
+    void delete(@Param("userId") Integer userId, @Param("outputId") Long outputId);
 
-    // ユーザーの「お気に入り」行一覧
-    List<Favorite> selectByUserId(@Param("userId") Integer userId);
+    // 自分のお気に入り全件（レコード）
+    List<Favorite> selectByUserId(Integer userId);
 
-    // 登録済み判定（>0 なら登録済み）
-    int exists(@Param("userId") Integer userId, @Param("outputId") Integer outputId);
+    // 存在確認（0/1）
+    int exists(@Param("userId") Integer userId, @Param("outputId") Long outputId);
 
-    // ユーザーのお気に入り Output 一覧（画面表示用）
-    List<Output> selectOutputsByUser(@Param("userId") Integer userId);
+    // お気に入りの Output 実体一覧（JOIN で取得 / created_at DESC 優先）
+    List<Output> selectOutputsByUser(Integer userId);
 }

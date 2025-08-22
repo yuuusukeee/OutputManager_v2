@@ -1,22 +1,28 @@
 <!DOCTYPE html>
+
 <html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
   <meta charset="UTF-8"/>
   <title>アウトプット一覧</title>
   <link rel="stylesheet" th:href="@{/css/app.css}"/>
   <style>
-    /* 横スクロールの見た目（最低限） */
+    .section { margin: 24px auto; max-width: 1120px; }
+    .section h2 { margin: 0 0 8px; font-size: 1.15rem; }
     .rail { display:flex; gap:12px; overflow-x:auto; padding:8px 2px; scroll-snap-type:x mandatory; }
-    .card { flex:0 0 180px; scroll-snap-align:start; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; background:#fff; }
-    .card img { width:100%; height:120px; object-fit:cover; display:block; }
-    .card .meta { padding:8px 10px; }
-    .section { margin:20px auto; max-width:1080px; }
-    .section h2 { margin:0 0 8px 0; font-size:1.1rem; }
-    .empty { color:#6b7280; font-size:0.9rem; padding:8px 0 0 2px; }
+    .card { flex:0 0 200px; scroll-snap-align:start; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; background:#fff; position:relative; }
+    .thumb-wrap { position:relative; width:100%; aspect-ratio:16/9; background:#f3f4f6; }
+    .thumb { width:100%; height:100%; object-fit:cover; display:block; }
+    .play { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+    .play::before{content:""; width:48px; height:48px; border-radius:999px; background:rgba(0,0,0,.45); display:inline-block;}
+    .play::after{content:""; margin-left:-32px; border-left:18px solid #fff; border-top:11px solid transparent; border-bottom:11px solid transparent;}
+    @media (max-width: 480px){ .card{flex-basis: 66vw;} .play::before{width:40px;height:40px;} .play::after{margin-left:-28px;border-left-width:16px;border-top-width:10px;border-bottom-width:10px;} }
+    .meta { padding:10px 12px; }
+    .title { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .empty { color:#6b7280; font-size:.93rem; padding-left:2px; }
+    a.card { text-decoration:none; color:inherit; }
   </style>
 </head>
 <body>
-  <!-- 共通ヘッダー -->
   <div th:replace="~{fragments/header :: body}"></div>
 
   <main>
@@ -25,13 +31,16 @@
       <h2>最近のアウトプット</h2>
       <div class="rail" th:if="${!#lists.isEmpty(recent)}">
         <a class="card" th:each="o : ${recent}" th:href="@{/outputs/{id}(id=${o.id})}">
-          <img
-            th:src="${#strings.isEmpty(o?.icon) ? '/img/placeholder.png' : o.icon}"
-            alt="thumbnail"
-            th:attr="onerror=|this.onerror=null;this.src='@{/img/placeholder.png}'|">
-          <div class="meta">
-            <div th:text="${o.title}">タイトル</div>
+          <div class="thumb-wrap">
+            <img class="thumb"
+                 loading="lazy"
+                 th:alt="${o.title}"
+                 th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
+                 th:src="@{/img/placeholder.png}"
+                 onerror="this.onerror=null;this.src=this.getAttribute('data-fallback')||'[[${'/img/placeholder.png;'}]]'">
+            <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
           </div>
+          <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
         </a>
       </div>
       <div class="empty" th:if="${#lists.isEmpty(recent)}">データがありません。</div>
@@ -42,29 +51,36 @@
       <h2>お気に入り</h2>
       <div class="rail" th:if="${!#lists.isEmpty(favorites)}">
         <a class="card" th:each="o : ${favorites}" th:href="@{/outputs/{id}(id=${o.id})}">
-          <img
-            th:src="${#strings.isEmpty(o?.icon) ? '/img/placeholder.png' : o.icon}"
-            alt="thumbnail"
-            th:attr="onerror=|this.onerror=null;this.src='@{/img/placeholder.png}'|">
-          <div class="meta"><div th:text="${o.title}">タイトル</div></div>
+          <div class="thumb-wrap">
+            <img class="thumb" loading="lazy"
+                 th:alt="${o.title}"
+                 th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
+                 th:src="@{/img/placeholder.png}">
+            <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
+          </div>
+          <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
         </a>
       </div>
       <div class="empty" th:if="${#lists.isEmpty(favorites)}">データがありません。</div>
     </section>
 
     <!-- 学習 -->
-    <section class="section" th:if="${learn != null}">
+    <section class="section" th:if="${(learning != null and !#lists.isEmpty(learning)) or (learn != null and !#lists.isEmpty(learn))}">
       <h2>学習</h2>
-      <div class="rail" th:if="${!#lists.isEmpty(learn)}">
-        <a class="card" th:each="o : ${learn}" th:href="@{/outputs/{id}(id=${o.id})}">
-          <img
-            th:src="${#strings.isEmpty(o?.icon) ? '/img/placeholder.png' : o.icon}"
-            alt="thumbnail"
-            th:attr="onerror=|this.onerror=null;this.src='@{/img/placeholder.png}'|">
-          <div class="meta"><div th:text="${o.title}">タイトル</div></div>
+      <div class="rail">
+        <a class="card"
+           th:each="o : ${learning != null ? learning : learn}"
+           th:href="@{/outputs/{id}(id=${o.id})}">
+          <div class="thumb-wrap">
+            <img class="thumb" loading="lazy"
+                 th:alt="${o.title}"
+                 th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
+                 th:src="@{/img/placeholder.png}">
+            <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
+          </div>
+          <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
         </a>
       </div>
-      <div class="empty" th:if="${#lists.isEmpty(learn)}">データがありません。</div>
     </section>
 
     <!-- 健康 -->
@@ -72,11 +88,14 @@
       <h2>健康</h2>
       <div class="rail" th:if="${!#lists.isEmpty(health)}">
         <a class="card" th:each="o : ${health}" th:href="@{/outputs/{id}(id=${o.id})}">
-          <img
-            th:src="${#strings.isEmpty(o?.icon) ? '/img/placeholder.png' : o.icon}"
-            alt="thumbnail"
-            th:attr="onerror=|this.onerror=null;this.src='@{/img/placeholder.png}'|">
-          <div class="meta"><div th:text="${o.title}">タイトル</div></div>
+          <div class="thumb-wrap">
+            <img class="thumb" loading="lazy"
+                 th:alt="${o.title}"
+                 th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
+                 th:src="@{/img/placeholder.png}">
+            <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
+          </div>
+          <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
         </a>
       </div>
       <div class="empty" th:if="${#lists.isEmpty(health)}">データがありません。</div>
@@ -87,11 +106,14 @@
       <h2>仕事</h2>
       <div class="rail" th:if="${!#lists.isEmpty(work)}">
         <a class="card" th:each="o : ${work}" th:href="@{/outputs/{id}(id=${o.id})}">
-          <img
-            th:src="${#strings.isEmpty(o?.icon) ? '/img/placeholder.png' : o.icon}"
-            alt="thumbnail"
-            th:attr="onerror=|this.onerror=null;this.src='@{/img/placeholder.png}'|">
-          <div class="meta"><div th:text="${o.title}">タイトル</div></div>
+          <div class="thumb-wrap">
+            <img class="thumb" loading="lazy"
+                 th:alt="${o.title}"
+                 th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
+                 th:src="@{/img/placeholder.png}">
+            <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
+          </div>
+          <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
         </a>
       </div>
       <div class="empty" th:if="${#lists.isEmpty(work)}">データがありません。</div>
@@ -102,15 +124,43 @@
       <h2>生活</h2>
       <div class="rail" th:if="${!#lists.isEmpty(life)}">
         <a class="card" th:each="o : ${life}" th:href="@{/outputs/{id}(id=${o.id})}">
-          <img
-            th:src="${#strings.isEmpty(o?.icon) ? '/img/placeholder.png' : o.icon}"
-            alt="thumbnail"
-            th:attr="onerror=|this.onerror=null;this.src='@{/img/placeholder.png}'|">
-          <div class="meta"><div th:text="${o.title}">タイトル</div></div>
+          <div class="thumb-wrap">
+            <img class="thumb" loading="lazy"
+                 th:alt="${o.title}"
+                 th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
+                 th:src="@{/img/placeholder.png}">
+            <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
+          </div>
+          <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
         </a>
       </div>
       <div class="empty" th:if="${#lists.isEmpty(life)}">データがありません。</div>
     </section>
   </main>
+
+  <script>
+    // YouTube ID抽出 & サムネ適用（iconが無いときのみ）
+    function ytId(url){
+      if(!url) return null;
+      try{
+        const u = new URL(url);
+        const h = u.hostname.replace('www.','');
+        if(h==='youtu.be'){ return u.pathname.slice(1); }
+        if(h==='youtube.com' || h==='m.youtube.com'){
+          if(u.pathname.startsWith('/watch')) return u.searchParams.get('v');
+          if(u.pathname.startsWith('/shorts/')) return u.pathname.split('/')[2];
+          if(u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2];
+        }
+      }catch(_){}
+      return null;
+    }
+    document.querySelectorAll('img.thumb').forEach(img=>{
+      const icon = img.getAttribute('data-icon');
+      const vurl = img.getAttribute('data-vurl');
+      if(icon && icon.trim()!==''){ img.src = icon; return; }
+      const id = ytId(vurl);
+      if(id){ img.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`; }
+    });
+  </script>
 </body>
 </html>

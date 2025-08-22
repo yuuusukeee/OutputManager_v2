@@ -1,15 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapperPUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.outputmanager.mapper.FavoriteMapper">
 
-  <!-- ===== Output一覧（ユーザーのお気に入り） ===== -->
-  <!-- NOTE: FavoriteMapper.java の selectOutputsByUser(Integer userId) は
-       単一引数に @Param が無いため #{param1} を使用します。 -->
-  <select id="selectOutputsByUser"
-          parameterType="int"
-          resultType="com.example.outputmanager.domain.Output">
+  <!-- 追加 -->
+  <insert id="insert" parameterType="com.example.outputmanager.domain.Favorite">
+    INSERT INTO favorites (user_id, output_id)
+    VALUES (#{userId}, #{outputId})
+  </insert>
+
+  <!-- 解除 -->
+  <delete id="delete">
+    DELETE FROM favorites
+    WHERE user_id = #{userId}
+      AND output_id = #{outputId}
+  </delete>
+
+  <!-- 自分のお気に入り全件（レコード） -->
+  <select id="selectByUserId" parameterType="int" resultType="com.example.outputmanager.domain.Favorite">
+    SELECT
+      id,
+      user_id   AS userId,
+      output_id AS outputId,
+      created_at AS createdAt
+    FROM favorites
+    WHERE user_id = #{userId}
+    ORDER BY created_at DESC, id DESC
+  </select>
+
+  <!-- 存在確認（0/1） -->
+  <select id="exists" resultType="int">
+    SELECT COUNT(*)
+    FROM favorites
+    WHERE user_id = #{userId}
+      AND output_id = #{outputId}
+  </select>
+
+  <!-- お気に入りの Output 実体一覧（JOIN） -->
+  <select id="selectOutputsByUser" parameterType="int" resultType="com.example.outputmanager.domain.Output">
     SELECT
       o.id,
       o.user_id     AS userId,
@@ -22,47 +51,9 @@
       o.created_at  AS createdAt,
       o.updated_at  AS updatedAt
     FROM favorites f
-    JOIN outputs o ON o.id = f.output_id
-    WHERE f.user_id = #{param1}
+      JOIN outputs o ON o.id = f.output_id
+    WHERE f.user_id = #{userId}
     ORDER BY o.created_at DESC, o.id DESC
-  </select>
-
-  <!-- ===== 追加：お気に入り行（Favorite）を扱う基本CRUD ===== -->
-
-  <!-- 登録 -->
-  <insert id="insert" parameterType="com.example.outputmanager.domain.Favorite" useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO favorites (user_id, output_id, created_at)
-    VALUES (#{userId}, #{outputId}, NOW())
-  </insert>
-
-  <!-- 解除 -->
-  <delete id="delete">
-    DELETE FROM favorites
-    WHERE user_id = #{userId}
-      AND output_id = #{outputId}
-  </delete>
-
-  <!-- ユーザーのFavorite行一覧 -->
-  <!-- 単一引数（@Paramなし）につき #{param1} を使用 -->
-  <select id="selectByUserId"
-          parameterType="int"
-          resultType="com.example.outputmanager.domain.Favorite">
-    SELECT
-      id,
-      user_id    AS userId,
-      output_id  AS outputId,
-      created_at AS createdAt
-    FROM favorites
-    WHERE user_id = #{param1}
-    ORDER BY created_at DESC, id DESC
-  </select>
-
-  <!-- 存在確認（件数 > 0） -->
-  <select id="exists" resultType="int">
-    SELECT COUNT(*)
-    FROM favorites
-    WHERE user_id = #{userId}
-      AND output_id = #{outputId}
   </select>
 
 </mapper>

@@ -8,10 +8,16 @@ import com.example.outputmanager.domain.Category;
 
 @Mapper
 public interface CategoryMapper {
-    List<Category> findAll();                     // ← これだけでOK
+    // 命名は findAll に統一
+    List<Category> findAll();
+
     Category selectById(Integer id);
+
     void insert(Category category);
+
     void update(Category category);
+
     void delete(Integer id);
+
     int countByName(String name);
 }

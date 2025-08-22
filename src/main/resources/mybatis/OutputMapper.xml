@@ -1,83 +1,82 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapperPUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.outputmanager.mapper.OutputMapper">
 
-  <!-- 共通列 -->
-  <sql id="columns">
-    id,
-    user_id     AS userId,
-    category_id AS categoryId,
-    title,
-    summary,
-    detail,
-    icon,
-    video_url   AS videoUrl,
-    created_at  AS createdAt,
-    updated_at  AS updatedAt
-  </sql>
-
-  <!-- ===== 基本CRUD ===== -->
-
-  <!-- 互換：全件取得（必要に応じて使用） -->
-  <select id="selectAll" resultType="com.example.outputmanager.domain.Output">
-    SELECT <include refid="columns"/>
-    FROM outputs
-    ORDER BY created_at DESC, id DESC
-  </select>
-
-  <!-- 主キー検索（Integer互換） -->
-  <select id="selectById" parameterType="int" resultType="com.example.outputmanager.domain.Output">
-    SELECT <include refid="columns"/>
-    FROM outputs
-    WHERE id = #{id}
-  </select>
-
-  <!-- 主キー検索（Long統一） -->
+  <!-- 主キー検索（Long） -->
   <select id="findById" parameterType="long" resultType="com.example.outputmanager.domain.Output">
-    SELECT <include refid="columns"/>
+    SELECT
+      id,
+      user_id     AS userId,
+      category_id AS categoryId,
+      title,
+      summary,
+      detail,
+      icon,
+      video_url   AS videoUrl,
+      created_at  AS createdAt,
+      updated_at  AS updatedAt
     FROM outputs
     WHERE id = #{id}
   </select>
 
-  <!-- ユーザーの全出力 -->
+  <!-- 自分の一覧（ユーザー別） -->
   <select id="selectByUserId" parameterType="int" resultType="com.example.outputmanager.domain.Output">
-    SELECT <include refid="columns"/>
+    SELECT
+      id,
+      user_id     AS userId,
+      category_id AS categoryId,
+      title,
+      summary,
+      detail,
+      icon,
+      video_url   AS videoUrl,
+      created_at  AS createdAt,
+      updated_at  AS updatedAt
     FROM outputs
     WHERE user_id = #{userId}
     ORDER BY created_at DESC, id DESC
   </select>
 
-  <!-- タイトル検索（タイトルのみ / user必須 / categoryId任意） -->
+  <!-- 検索：タイトルのみ／カテゴリ任意／ユーザー必須 -->
   <select id="search" resultType="com.example.outputmanager.domain.Output">
-    SELECT <include refid="columns"/>
+    SELECT
+      id,
+      user_id     AS userId,
+      category_id AS categoryId,
+      title,
+      summary,
+      detail,
+      icon,
+      video_url   AS videoUrl,
+      created_at  AS createdAt,
+      updated_at  AS updatedAt
     FROM outputs
-    <where>
-      user_id = #{userId}
+    WHERE 1 = 1
+      AND user_id = #{userId}
       <if test="categoryId != null">
         AND category_id = #{categoryId}
       </if>
       <if test="keyword != null and keyword != ''">
         AND title LIKE CONCAT('%', #{keyword}, '%')
       </if>
-    </where>
     ORDER BY created_at DESC, id DESC
   </select>
 
-  <!-- INSERT（created_at/updated_at はDBに任せる想定） -->
+  <!-- 登録（DBのAUTO_INCREMENTとタイムスタンプに委譲） -->
   <insert id="insert" parameterType="com.example.outputmanager.domain.Output" useGeneratedKeys="true" keyProperty="id">
-    INSERT INTO outputs
-      (user_id, category_id, title, summary, detail, icon, video_url)
-    VALUES
-      (#{userId}, #{categoryId}, #{title}, #{summary}, #{detail}, #{icon}, #{videoUrl})
+    INSERT INTO outputs (
+      user_id, category_id, title, summary, detail, icon, video_url
+    ) VALUES (
+      #{userId}, #{categoryId}, #{title}, #{summary}, #{detail}, #{icon}, #{videoUrl}
+    )
   </insert>
 
-  <!-- UPDATE（updated_at はDBの ON UPDATE に任せる想定） -->
+  <!-- 更新（updated_at は DB の ON UPDATE に任せる前提） -->
   <update id="update" parameterType="com.example.outputmanager.domain.Output">
     UPDATE outputs
     SET
-      user_id     = #{userId},
       category_id = #{categoryId},
       title       = #{title},
       summary     = #{summary},
@@ -87,64 +86,105 @@
     WHERE id = #{id}
   </update>
 
-  <!-- DELETE（Long/Integerいずれでも可） -->
-  <delete id="delete">
+  <!-- 削除 -->
+  <delete id="delete" parameterType="long">
     DELETE FROM outputs
     WHERE id = #{id}
   </delete>
 
-  <!-- ===== 補助 ===== -->
-
-  <!-- カテゴリ使用数（削除ガード用） -->
+  <!-- カテゴリ使用数 -->
   <select id="countByCategoryId" parameterType="int" resultType="int">
-    SELECT COUNT(*) FROM outputs WHERE category_id = #{categoryId}
+    SELECT COUNT(*)
+    FROM outputs
+    WHERE category_id = #{categoryId}
   </select>
 
-  <!-- IDリストで取得 -->
+  <!-- IDリストで取得（空なら0件を返す） -->
   <select id="selectByIds" resultType="com.example.outputmanager.domain.Output">
-    SELECT <include refid="columns"/>
+    SELECT
+      id,
+      user_id     AS userId,
+      category_id AS categoryId,
+      title,
+      summary,
+      detail,
+      icon,
+      video_url   AS videoUrl,
+      created_at  AS createdAt,
+      updated_at  AS UpdatedAt
     FROM outputs
-    WHERE id IN
-    <foreach item="id" collection="ids" open="(" separator="," close=")">
-      #{id}
-    </foreach>
+    <where>
+      <if test="ids != null and ids.size > 0">
+        id IN
+        <foreach collection="ids" item="i" open="(" close=")" separator=",">
+          #{i}
+        </foreach>
+      </if>
+      <if test="ids == null or ids.size == 0">
+        1 = 0
+      </if>
+    </where>
     ORDER BY created_at DESC, id DESC
   </select>
 
-  <!-- ===== 旧API互換：カテゴリ名ベース（お気に入り除外）===== -->
-  <select id="selectByUserAndCategoryNameExcludeFav" resultType="com.example.outputmanager.domain.Output">
-    SELECT <include refid="columns"/>
+  <!-- 互換：カテゴリ“名”ベース（旧API互換） -->
+  <select id="findByUserAndCategory" resultType="com.example.outputmanager.domain.Output">
+    SELECT
+      o.id,
+      o.user_id     AS userId,
+      o.category_id AS categoryId,
+      o.title,
+      o.summary,
+      o.detail,
+      o.icon,
+      o.video_url   AS videoUrl,
+      o.created_at  AS createdAt,
+      o.updated_at  AS updatedAt
     FROM outputs o
-    JOIN categories c ON c.id = o.category_id
+      JOIN categories c ON c.id = o.category_id
     WHERE o.user_id = #{userId}
       AND c.name = #{categoryName}
-      AND NOT EXISTS (
-        SELECT 1 FROM favorites f
-        WHERE f.user_id = o.user_id
-          AND f.output_id = o.id
-      )
     ORDER BY o.created_at DESC, o.id DESC
   </select>
 
-  <!-- ===== 新API：カテゴリIDベース ===== -->
-
-  <!-- ユーザー×カテゴリID（お気に入り除外） -->
+  <!-- 新仕様：カテゴリIDで“お気に入り除外”一覧 -->
   <select id="findByUserAndCategoryExcludeFav" resultType="com.example.outputmanager.domain.Output">
-    SELECT <include refid="columns"/>
+    SELECT
+      o.id,
+      o.user_id     AS userId,
+      o.category_id AS categoryId,
+      o.title,
+      o.summary,
+      o.detail,
+      o.icon,
+      o.video_url   AS videoUrl,
+      o.created_at  AS createdAt,
+      o.updated_at  AS updatedAt
     FROM outputs o
     WHERE o.user_id = #{userId}
       AND o.category_id = #{categoryId}
       AND NOT EXISTS (
-        SELECT 1 FROM favorites f
+        SELECT 1
+        FROM favorites f
         WHERE f.user_id = #{userId}
           AND f.output_id = o.id
       )
     ORDER BY o.created_at DESC, o.id DESC
   </select>
 
-  <!-- 最近N件（ユーザー別） -->
+  <!-- 新仕様：最近N件（ユーザー別） -->
   <select id="findRecentByUser" resultType="com.example.outputmanager.domain.Output">
-    SELECT <include refid="columns"/>
+    SELECT
+      id,
+      user_id     AS userId,
+      category_id AS categoryId,
+      title,
+      summary,
+      detail,
+      icon,
+      video_url   AS videoUrl,
+      created_at  AS createdAt,
+      updated_at  AS updatedAt
     FROM outputs
     WHERE user_id = #{userId}
     ORDER BY created_at DESC, id DESC

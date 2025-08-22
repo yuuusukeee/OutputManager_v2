@@ -6,14 +6,28 @@ import lombok.Data;
 
 @Data
 public class Output {
-    private Long id;                // BIGINT (PK)
-    private Integer userId;         // users.id
-    private Integer categoryId;     // categories.id (NOT NULL)
-    private String title;           // VARCHAR(50)
-    private String summary;         // VARCHAR(500)
-    private String detail;          // VARCHAR(2000)
-    private String icon;            // /img/uploads/{uuid.ext} or external URL (legacy)
-    private String videoUrl;        // YouTube URL
+    /** BIGINT → Java は Long に統一 */
+    private Long id;
+
+    /** users.id は現状 INT 運用のため Integer 維持 */
+    private Integer userId;
+
+    /** categories.id も INT のため Integer 維持（1:学習/2:健康/3:仕事/4:生活） */
+    private Integer categoryId;
+
+    private String title;
+    private String summary;
+    private String detail;
+
+    /**
+     * 画像の公開URL（例：/img/uploads/{uuid.ext}）
+     * 旧データの外部URL互換はこの文字列にそのまま入る想定
+     */
+    private String icon;
+
+    /** YouTube の URL（保存は元URL） */
+    private String videoUrl;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
