@@ -1,11 +1,19 @@
+
 package com.example.outputmanager.controller;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -14,6 +22,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.outputmanager.domain.Output;
 import com.example.outputmanager.form.OutputForm;
@@ -34,24 +43,32 @@ public class OutputController {
     private final CategoryService categoryService;   // ★カテゴリ一覧供給
     private final FavoriteService favoriteService;   // ★お気に入り取得/判定
 
+    @Value("${app.upload.dir:./uploads/images}")
+    private String uploadDir; // ★画像の物理保存先（WebConfigと同じ値）
+
     /** 一覧トップ（最近/お気に入り/カテゴリごと） */
     @GetMapping("/outputs")
     public String outputs(Model model, HttpSession session) {
         Integer uid = (Integer) session.getAttribute("loginUserId");
-        if (uid == null) return "redirect:/login";
+        if (uid == null) {
+            return "redirect:/login";
+        }
 
-        model.addAttribute("recent",    outputService.findRecentByUser(uid, 10));   // 最近10件
-        model.addAttribute("favorites", favoriteService.findOutputsByUser(uid));    // お気に入り
+        // ★最近10件
+        model.addAttribute("recent", outputService.findRecentByUser(uid, 10));
+        // ★お気に入り
+        model.addAttribute("favorites", favoriteService.findOutputsByUser(uid));
 
-        // ★学習を1回取得して、両キーに同じものを入れる（互換）＋件数ログ
-        var learnList = outputService.findByUserAndCategory(uid, "学習");
-        model.addAttribute("learn", learnList);       // 正式に使いたいキー
-        model.addAttribute("learning", learnList);    // 互換キー（テンプレが参照している可能性）
-        System.out.println("[DEBUG] learn.size=" + (learnList == null ? "null" : learnList.size()));
+        // ★学習：互換のため learn / learning の両方に詰める
+        List<Output> learnList = outputService.findByUserAndCategory(uid, "学習");
+        model.addAttribute("learn", learnList);
+        model.addAttribute("learning", learnList);
 
+        // 他カテゴリ
         model.addAttribute("health", outputService.findByUserAndCategory(uid, "健康"));
         model.addAttribute("work",   outputService.findByUserAndCategory(uid, "仕事"));
         model.addAttribute("life",   outputService.findByUserAndCategory(uid, "生活"));
+
         return "outputs/index";
     }
 
@@ -129,9 +146,32 @@ public class OutputController {
             model.addAttribute("categories", categoryService.findAll());
             return "outputs/save";
         }
+
+        // フォーム → エンティティ（基本部）
         Output entity = form.toEntityBasic(uid);
-        // 画像保存は④本実装で対応。今は既存アイコンを保持（新規は空OK）
-        entity.setIcon(form.getExistingIcon());
+
+        // ★画像アップロードを反映（なければ既存を維持）
+        try {
+            String iconPath = handleImageUpload(form.getImageFile(), form.getExistingIcon());
+            entity.setIcon(iconPath);
+        } catch (IllegalArgumentException e) {
+            String code = e.getMessage();
+            if ("EXT".equals(code)) {
+                binding.reject("output.image.ext", "画像は jpg/jpeg/png/webp のみアップロードできます");
+            } else if ("MAX".equals(code)) {
+                binding.reject("output.image.max", "画像サイズは3MB以内にしてください");
+            } else {
+                binding.reject("registerError", "画像の保存に失敗しました");
+            }
+            model.addAttribute("categories", categoryService.findAll());
+            return "outputs/save";
+        } catch (Exception ex) {
+            binding.reject("registerError", "画像の保存に失敗しました");
+            model.addAttribute("categories", categoryService.findAll());
+            return "outputs/save";
+        }
+
+        // 新規 or 更新
         if (entity.getId() == null) {
             outputService.save(entity);
         } else {
@@ -224,5 +264,46 @@ public class OutputController {
         model.addAttribute("prevPage", Math.max(1, page - 1));
         model.addAttribute("nextPage", Math.min(totalPages, page + 1));
         return view;
+    }
+
+    // ===== 画像アップロード（最小実装）=====
+    private String handleImageUpload(MultipartFile file, String existingIcon) throws Exception {
+        // ファイル未指定なら既存をそのまま使う
+        if (file == null || file.isEmpty()) {
+            return existingIcon;
+        }
+
+        // サイズ（念のため）
+        if (file.getSize() > 3L * 1024 * 1024) { // 3MB
+            throw new IllegalArgumentException("MAX");
+        }
+
+        // 許可拡張子判定（content-type）
+        String ext;
+        String ct = file.getContentType();
+        if ("image/jpeg".equalsIgnoreCase(ct)) ext = ".jpg";
+        else if ("image/png".equalsIgnoreCase(ct)) ext = ".png";
+        else if ("image/webp".equalsIgnoreCase(ct)) ext = ".webp";
+        else throw new IllegalArgumentException("EXT");
+
+        // 保存先ディレクトリを用意
+        Path root = Paths.get(uploadDir).toAbsolutePath().normalize();
+        Files.createDirectories(root);
+
+        // UUIDファイル名で保存
+        String filename = UUID.randomUUID().toString().replace("-", "") + ext;
+        Path dest = root.resolve(filename);
+        try (InputStream in = file.getInputStream()) {
+            Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        // 旧ファイル削除（/img/uploads/… だけ対象）
+        if (existingIcon != null && existingIcon.startsWith("/img/uploads/")) {
+            String old = existingIcon.substring("/img/uploads/".length());
+            try { Files.deleteIfExists(root.resolve(old)); } catch (Exception ignored) {}
+        }
+
+        // 画面/DBに入れる公開パス
+        return "/img/uploads/" + filename;
     }
 }
