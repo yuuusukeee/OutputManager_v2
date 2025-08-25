@@ -12,8 +12,11 @@
         <a th:href="@{/life}" class="btn-link">生活</a>
       </nav>
 
-      <div class="brand">
+      <div class="brand" th:if="${session.loginUserId != null}">
         <a th:href="@{/home}" class="brand-link">OutputManager</a>
+      </div>
+      <div class="brand" th:if="${session.loginUserId == null}">
+        <span class="brand-link">OutputManager</span>
       </div>
 
       <div class="nav-right" th:if="${session.loginUserId != null}">

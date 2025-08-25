@@ -15,8 +15,7 @@ public class AuthInterceptor implements HandlerInterceptor {
      * 注意: "/" は完全一致、それ以外は startsWith 判定。
      */
     private static final String[] PUBLIC_PREFIXES = {
-            "/", "/home",
-            "/login", "/logout", "/users/register",
+            "/login", "/users/register",
             "/css", "/js", "/images", "/webjars",
             "/favicon.ico", "/error",
             "/img" // アップロード画像 & プレースホルダ（/img/**）を公開

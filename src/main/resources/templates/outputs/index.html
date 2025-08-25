@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html xmlns:th="http://www.thymeleaf.org" lang="ja">
 <head>
   <meta charset="UTF-8"/>
@@ -37,7 +36,7 @@
                  th:alt="${o.title}"
                  th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
                  th:src="@{/img/placeholder.png}"
-                 onerror="this.onerror=null;this.src=this.getAttribute('data-fallback')||'[[${'/img/placeholder.png;'}]]'">
+                 onerror="this.onerror=null;this.src='/img/placeholder.png'">
             <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
           </div>
           <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
@@ -55,7 +54,8 @@
             <img class="thumb" loading="lazy"
                  th:alt="${o.title}"
                  th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
-                 th:src="@{/img/placeholder.png}">
+                 th:src="@{/img/placeholder.png}"
+                 onerror="this.onerror=null;this.src='/img/placeholder.png'">
             <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
           </div>
           <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
@@ -64,23 +64,25 @@
       <div class="empty" th:if="${#lists.isEmpty(favorites)}">データがありません。</div>
     </section>
 
-    <!-- 学習 -->
-    <section class="section" th:if="${(learning != null and !#lists.isEmpty(learning)) or (learn != null and !#lists.isEmpty(learn))}">
+    <!-- 学習（learning が無ければ learn を使う） -->
+    <section class="section" th:with="learnList=${learning != null ? learning : learn}" th:if="${learnList != null}">
       <h2>学習</h2>
-      <div class="rail">
+      <div class="rail" th:if="${!#lists.isEmpty(learnList)}">
         <a class="card"
-           th:each="o : ${learning != null ? learning : learn}"
+           th:each="o : ${learnList}"
            th:href="@{/outputs/{id}(id=${o.id})}">
           <div class="thumb-wrap">
             <img class="thumb" loading="lazy"
                  th:alt="${o.title}"
                  th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
-                 th:src="@{/img/placeholder.png}">
+                 th:src="@{/img/placeholder.png}"
+                 onerror="this.onerror=null;this.src='/img/placeholder.png'">
             <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
           </div>
           <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
         </a>
       </div>
+      <div class="empty" th:if="${#lists.isEmpty(learnList)}">データがありません。</div>
     </section>
 
     <!-- 健康 -->
@@ -92,7 +94,8 @@
             <img class="thumb" loading="lazy"
                  th:alt="${o.title}"
                  th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
-                 th:src="@{/img/placeholder.png}">
+                 th:src="@{/img/placeholder.png}"
+                 onerror="this.onerror=null;this.src='/img/placeholder.png'">
             <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
           </div>
           <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
@@ -110,7 +113,8 @@
             <img class="thumb" loading="lazy"
                  th:alt="${o.title}"
                  th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
-                 th:src="@{/img/placeholder.png}">
+                 th:src="@{/img/placeholder.png}"
+                 onerror="this.onerror=null;this.src='/img/placeholder.png'">
             <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
           </div>
           <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>
@@ -128,7 +132,8 @@
             <img class="thumb" loading="lazy"
                  th:alt="${o.title}"
                  th:attr="data-icon=${o.icon},data-vurl=${o.videoUrl}"
-                 th:src="@{/img/placeholder.png}">
+                 th:src="@{/img/placeholder.png}"
+                 onerror="this.onerror=null;this.src='/img/placeholder.png'">
             <div class="play" th:if="${o.videoUrl != null and !#strings.isEmpty(o.videoUrl)}"></div>
           </div>
           <div class="meta"><div class="title" th:text="${#strings.abbreviate(o.title,15)}">タイトル</div></div>

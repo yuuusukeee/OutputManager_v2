@@ -20,6 +20,9 @@
     .btn-star{background:none;border:none;cursor:pointer;font-size:20px;line-height:1}
     .body h3{margin-top:18px}
     .preline{white-space:pre-line}
+    .btn{display:inline-block;padding:8px 12px;border:1px solid #ddd;border-radius:8px;text-decoration:none;color:inherit}
+    .btn-outline{background:#fff}
+    .btn-outline.danger{border-color:#e11d48;color:#e11d48}
   </style>
 </head>
 <body>
@@ -34,7 +37,7 @@
                th:alt="${output.title}"
                th:attr="data-icon=${output.icon},data-vurl=${output.videoUrl}"
                th:src="@{/img/placeholder.png}"
-               onerror="this.onerror=null;this.src='[[${'/img/placeholder.png;'}]]'">
+               onerror="this.onerror=null;this.src='/img/placeholder.png'">
           <a th:if="${output.videoUrl != null and !#strings.isEmpty(output.videoUrl)}"
              class="play"
              th:href="${output.videoUrl}"
@@ -63,11 +66,11 @@
 
       <div class="fav">
         <!-- ☆トグル：状態が分かる場合のみ表示（なければ後日実装時にDOM追加） -->
-        <form th:action="@{/favorites/add}" method="post" th:if="${favored == null or !favored}">
+        <form th:action="@{/favorites/add}" method="post" th:if="${favored == null || !favored}">
           <input type="hidden" name="outputId" th:value="${output.id}">
           <button type="submit" class="btn-star" aria-label="お気に入りに追加">☆ 追加</button>
         </form>
-        <form th:action="@{/favorites/remove}" method="post" th:if="${favored != null and favored}">
+        <form th:action="@{/favorites/remove}" method="post" th:if="${favored != null && favored}">
           <input type="hidden" name="outputId" th:value="${output.id}">
           <button type="submit" class="btn-star" aria-label="お気に入りを解除">★ 解除</button>
         </form>

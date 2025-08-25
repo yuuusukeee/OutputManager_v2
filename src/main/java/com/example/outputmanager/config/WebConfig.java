@@ -29,10 +29,9 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(
-                        "/", "/home",
-                        "/login/**", "/logout/**",
+                        "/login", "/logout/**",
                         "/users/register/**",
-                        "/css/**", "/js/**", "/images/**",
+                        "/css/**", "/js/**", "/images/**", "/webjars/**",
                         "/favicon.ico", "/error",
                         "/img/**" // アップロード画像 & プレースホルダの配信用
                 );

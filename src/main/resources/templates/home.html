@@ -9,8 +9,8 @@
 
   <main class="container home-shell">
     <section class="home-actions">
-      <!-- ★ ここを /outputs/save に変更 -->
-      <a th:href="@{/outputs/save}" class="btn-primary xl">新規作成</a>
+      <!-- 新規作成は GET /outputs/new -->
+      <a th:href="@{/outputs/new}" class="btn-primary xl">新規作成</a>
       <a th:href="@{/outputs}" class="btn-secondary xl">アウトプット一覧</a>
     </section>
   </main>
