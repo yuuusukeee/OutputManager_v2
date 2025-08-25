@@ -38,22 +38,20 @@ public class OutputController {
     @GetMapping("/outputs")
     public String outputs(Model model, HttpSession session) {
         Integer uid = (Integer) session.getAttribute("loginUserId");
-        if (uid == null) {
-            return "redirect:/login";
-        }
+        if (uid == null) return "redirect:/login";
 
-        // ★最近10件
-        model.addAttribute("recent", outputService.findRecentByUser(uid, 10));
-        // ★お気に入り
-        model.addAttribute("favorites", favoriteService.findOutputsByUser(uid));
+        model.addAttribute("recent",    outputService.findRecentByUser(uid, 10));   // 最近10件
+        model.addAttribute("favorites", favoriteService.findOutputsByUser(uid));    // お気に入り
 
-        // ★重複OK仕様：お気に入りに含まれていてもカテゴリに表示する
-        model.addAttribute("learn",  outputService.findByUserAndCategory(uid, "学習"));
+        // ★学習を1回取得して、両キーに同じものを入れる（互換）＋件数ログ
+        var learnList = outputService.findByUserAndCategory(uid, "学習");
+        model.addAttribute("learn", learnList);       // 正式に使いたいキー
+        model.addAttribute("learning", learnList);    // 互換キー（テンプレが参照している可能性）
+        System.out.println("[DEBUG] learn.size=" + (learnList == null ? "null" : learnList.size()));
+
         model.addAttribute("health", outputService.findByUserAndCategory(uid, "健康"));
         model.addAttribute("work",   outputService.findByUserAndCategory(uid, "仕事"));
         model.addAttribute("life",   outputService.findByUserAndCategory(uid, "生活"));
-
-        // 最終採用テンプレート
         return "outputs/index";
     }
 
