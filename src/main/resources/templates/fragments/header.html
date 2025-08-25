@@ -1,9 +1,9 @@
 <!-- fragments/header.html -->
 <div xmlns:th="http://www.thymeleaf.org" th:fragment="body">
   <header class="topbar">
-    <div class="topbar-inner container">
+    <!-- ▼ここを container から topbar-container に変更 -->
+    <div class="topbar-inner topbar-container">
 
-      <!-- 左ナビ：ログイン後だけ表示 -->
       <nav class="nav-left" th:if="${session.loginUserId != null}">
         <a th:href="@{/home}" class="btn-link">Home</a>
         <a th:href="@{/favorites}" class="btn-link">お気に入り</a>
@@ -13,13 +13,12 @@
         <a th:href="@{/life}" class="btn-link">生活</a>
       </nav>
 
-      <!-- 中央ロゴ：ログイン後=リンク / ログイン前=非クリック要素 -->
       <div class="brand">
+        <!-- ▼ログイン後はリンク、未ログインは見た目同じでクリック不可 -->
         <a th:if="${session.loginUserId != null}" th:href="@{/home}" class="brand-link">OutputManager</a>
-        <span th:if="${session.loginUserId == null}" class="brand-link not-clickable">OutputManager</span>
+        <span th:if="${session.loginUserId == null}" class="brand-link brand-disabled">OutputManager</span>
       </div>
 
-      <!-- 右：検索＆ログアウト（ログイン後だけ表示） -->
       <div class="nav-right" th:if="${session.loginUserId != null}">
         <form th:action="@{/outputs}" method="get" class="search-box">
           <input type="text" name="keyword" placeholder="キーワードで検索" aria-label="検索">
