@@ -1,7 +1,7 @@
 package com.example.outputmanager.controller;
 
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,62 +10,52 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
-/**
- * ログイン画面の表示と、ログインPOSTを受ける最小実装。
- * UIフロー成立を優先し、バリデーションOKならセッションに loginUserId を入れて /outputs へ。
- * （後で実DB照合に置き換え可能：TODO印を参照）
- */
+import com.example.outputmanager.form.LoginForm;
+import com.example.outputmanager.service.UserService;
+
+import lombok.RequiredArgsConstructor;
+
 @Controller
+@RequiredArgsConstructor
 public class LoginController {
 
-    /** GET /login : ログイン画面の表示 */
+    private final UserService userService;
+
+    /** GET /login：未ログインは画面表示、ログイン済みは /home へ */
     @GetMapping("/login")
-    public String showLogin(Model model) {
+    public String showLogin(Model model, HttpSession session) {
+        if (session.getAttribute("loginUserId") != null) {
+            return "redirect:/home"; // 既ログインはホームへ
+        }
         if (!model.containsAttribute("form")) {
-            model.addAttribute("form", new LoginForm()); // login.html の th:object="${form}" に合わせる
+            model.addAttribute("form", new LoginForm()); // フォームを供給
         }
         return "login";
     }
 
-    /** POST /login : ログイン処理（最小） */
+    /** POST /login：DB認証OK→/home、NG→同画面でエラー表示 */
     @PostMapping("/login")
-    public String doLogin(
-            @ModelAttribute("form") LoginForm form,
-            BindingResult bindingResult,
-            HttpSession session,
-            Model model
-    ) {
-        // 簡易バリデーション（空欄NG）
-        if (form.getName() == null || form.getName().isBlank()
-                || form.getPassword() == null || form.getPassword().isBlank()) {
-            bindingResult.reject("login.invalid", "ユーザー名とパスワードを入力してください。");
-            return "login"; // エラー時はそのまま画面再表示
+    public String doLogin(@Valid @ModelAttribute("form") LoginForm form,
+                          BindingResult binding,
+                          HttpSession session,
+                          Model model) {
+        // 入力エラー（必須/長さ）なら画面戻し
+        if (binding.hasErrors()) {
+            return "login";
+        }
+        // DB認証：ユーザー存在 & パスワード一致のみOK
+        boolean ok = userService.isValidLogin(form.getName(), form.getPassword());
+        if (!ok) {
+            binding.reject("login.failed", "ユーザー名またはパスワードが正しくありません");
+            return "login"; // 同画面に留まる
         }
 
-        // TODO: ここをDB照合に置き換える（例：userService.authenticate(...)）
-        // 成功時のユーザーIDを取得して session に格納する想定。
-        // いまは UI を進めるためにダミーで固定IDをセット。
-        Integer userId = 1;
-
-        // セッションにログイン情報を保存
-        session.setAttribute("loginUserId", userId);
+        // セッション確立（ここ以外で loginUserId を絶対に入れない）
+        Integer uid = userService.findUserId(form.getName());
+        session.setAttribute("loginUserId", uid);
         session.setAttribute("loginUserName", form.getName());
 
-        // ログイン後の着地先 → /outputs に修正
-        return "redirect:/outputs";
-    }
-
-    /** ログインフォームの最小DTO（既存DTOがあれば置き換え可） */
-    public static class LoginForm {
-        @NotBlank
-        private String name;
-        @NotBlank
-        private String password;
-
-        // --- getter / setter ---
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
+        // 成功したら必ず /home へ
+        return "redirect:/home";
     }
 }

@@ -10,10 +10,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class HomeController {
 
-    @GetMapping({"/"})
-    public String root() {
-        return "redirect:/home";
-    }
+	// "/" はまず /login に飛ばす。ログイン済みなら LoginController 側で /home へ返す
+	@GetMapping("/")
+	public String root() { 
+	    return "redirect:/login"; 
+	}
 
     @GetMapping("/home")
     public String home(Model model, HttpSession session) {
